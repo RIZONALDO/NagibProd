@@ -5,7 +5,7 @@ import { useLocation, useParams } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, CheckCircle2, AlertTriangle, User } from "lucide-react";
+import { ArrowLeft, CheckCircle2, AlertTriangle, User, ChevronDown, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -91,6 +91,16 @@ export default function ReturnShoot() {
 
   const [returnedBy, setReturnedBy] = useState("");
   const [receivedBy, setReceivedBy] = useState("");
+  const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
+
+  const toggleExpanded = (equipId: number) => {
+    setExpandedItems(prev => {
+      const next = new Set(prev);
+      if (next.has(equipId)) next.delete(equipId);
+      else next.add(equipId);
+      return next;
+    });
+  };
 
   const teamOptions: TeamMemberOption[] = (shoot?.team ?? []).map(m => ({
     name: m.teamMember.name,
@@ -246,66 +256,96 @@ export default function ReturnShoot() {
         <Card>
           <CardHeader>
             <CardTitle>Conferência de Equipamentos</CardTitle>
-            <CardDescription>Verifique as quantidades e o estado físico no retorno.</CardDescription>
+            <CardDescription>
+              Clique em um item para registrar quantidade, condição e danos.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {shoot.equipmentItems.map((item) => {
-              const returnData = itemReturns[item.equipmentId] || { quantityReturned: item.quantity.toString(), hasDamage: false };
-              const isMissing = parseInt(returnData.quantityReturned) < item.quantity;
-              
-              return (
-                <div key={item.id} className={`border rounded-lg p-4 transition-colors ${
-                  isMissing || returnData.hasDamage ? 'border-destructive/50 bg-destructive/5' : 'bg-muted/20'
-                }`}>
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <p className="font-semibold text-lg">{item.equipment.name}</p>
-                      <p className="text-sm text-muted-foreground">Código: {item.equipment.internalCode || 'N/A'}</p>
-                    </div>
-                    <div className="bg-secondary text-secondary-foreground px-3 py-1 rounded font-medium text-sm border">
-                      Enviado: {item.quantity}
-                    </div>
-                  </div>
-                  
-                  <div className="grid sm:grid-cols-12 gap-4">
-                    <div className="sm:col-span-3 space-y-2">
-                      <Label className="text-xs font-semibold">Qtd. Devolvida</Label>
-                      <Input 
-                        type="number"
-                        min="0"
-                        max={item.quantity}
-                        value={returnData.quantityReturned}
-                        onChange={e => handleItemChange(item.equipmentId, 'quantityReturned', e.target.value)}
-                        className={isMissing ? "border-destructive text-destructive" : ""}
-                      />
-                      {isMissing && (
-                        <p className="text-[10px] text-destructive font-medium flex items-center gap-1">
-                          <AlertTriangle className="h-3 w-3" /> Falta {item.quantity - parseInt(returnData.quantityReturned)}
-                        </p>
+          <CardContent className="p-0">
+            <div className="divide-y">
+              {shoot.equipmentItems.map((item) => {
+                const returnData = itemReturns[item.equipmentId] || { quantityReturned: item.quantity.toString(), hasDamage: false, notes: "" };
+                const isMissing = parseInt(returnData.quantityReturned || "0") < item.quantity;
+                const hasProblem = isMissing || returnData.hasDamage;
+                const isExpanded = expandedItems.has(item.equipmentId);
+
+                return (
+                  <div key={item.id}>
+                    {/* Collapsed row — always visible */}
+                    <button
+                      type="button"
+                      onClick={() => toggleExpanded(item.equipmentId)}
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40 ${
+                        hasProblem ? 'bg-destructive/5' : ''
+                      }`}
+                    >
+                      {isExpanded
+                        ? <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                        : <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                      }
+                      <span className="flex-1 font-medium text-sm">{item.equipment.name}</span>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        {returnData.quantityReturned || item.quantity}/{item.quantity}
+                      </span>
+                      {hasProblem && (
+                        <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
                       )}
-                    </div>
-                    <div className="sm:col-span-5 space-y-2">
-                      <Label className="text-xs">Condição / Observações</Label>
-                      <Input 
-                        placeholder="Detalhes sobre o estado..."
-                        value={returnData.notes || ""}
-                        onChange={e => handleItemChange(item.equipmentId, 'notes', e.target.value)}
-                      />
-                    </div>
-                    <div className="sm:col-span-4 space-y-2">
-                      <Label className="text-xs">Apresenta Danos?</Label>
-                      <div className="flex items-center space-x-2 pt-2">
-                        <Switch 
-                          checked={returnData.hasDamage}
-                          onCheckedChange={checked => handleItemChange(item.equipmentId, 'hasDamage', checked)}
-                        />
-                        <span className="text-sm">{returnData.hasDamage ? "Sim (Danificado)" : "Não"}</span>
+                      {returnData.hasDamage && (
+                        <span className="text-[10px] font-semibold text-destructive bg-destructive/10 px-1.5 py-0.5 rounded shrink-0">
+                          DANO
+                        </span>
+                      )}
+                      {isMissing && !returnData.hasDamage && (
+                        <span className="text-[10px] font-semibold text-destructive bg-destructive/10 px-1.5 py-0.5 rounded shrink-0">
+                          FALTA {item.quantity - parseInt(returnData.quantityReturned || "0")}
+                        </span>
+                      )}
+                    </button>
+
+                    {/* Expanded details */}
+                    {isExpanded && (
+                      <div className={`px-4 pb-4 pt-2 border-t bg-muted/20 ${hasProblem ? 'bg-destructive/5' : ''}`}>
+                        <div className="grid sm:grid-cols-12 gap-4">
+                          <div className="sm:col-span-3 space-y-1.5">
+                            <Label className="text-xs font-semibold">Qtd. Devolvida</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              max={item.quantity}
+                              value={returnData.quantityReturned}
+                              onChange={e => handleItemChange(item.equipmentId, 'quantityReturned', e.target.value)}
+                              className={isMissing ? "border-destructive text-destructive" : ""}
+                            />
+                            {isMissing && (
+                              <p className="text-[10px] text-destructive font-medium flex items-center gap-1">
+                                <AlertTriangle className="h-3 w-3" /> Falta {item.quantity - parseInt(returnData.quantityReturned || "0")}
+                              </p>
+                            )}
+                          </div>
+                          <div className="sm:col-span-5 space-y-1.5">
+                            <Label className="text-xs">Condição / Observações</Label>
+                            <Input
+                              placeholder="Detalhes sobre o estado..."
+                              value={returnData.notes || ""}
+                              onChange={e => handleItemChange(item.equipmentId, 'notes', e.target.value)}
+                            />
+                          </div>
+                          <div className="sm:col-span-4 space-y-1.5">
+                            <Label className="text-xs">Apresenta Danos?</Label>
+                            <div className="flex items-center space-x-2 pt-2">
+                              <Switch
+                                checked={returnData.hasDamage}
+                                onCheckedChange={checked => handleItemChange(item.equipmentId, 'hasDamage', checked)}
+                              />
+                              <span className="text-sm">{returnData.hasDamage ? "Sim (Danificado)" : "Não"}</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
 
