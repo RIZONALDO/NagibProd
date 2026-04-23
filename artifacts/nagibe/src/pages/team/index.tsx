@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, User, Phone } from "lucide-react";
+import { Search, Plus, User, Phone, Briefcase } from "lucide-react";
 import { Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -39,7 +39,7 @@ export default function TeamList() {
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nome..."
+              placeholder="Buscar por nome ou função..."
               className="pl-8"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -86,10 +86,18 @@ export default function TeamList() {
               <Link key={member.id} href={`/team/${member.id}`} className="block group">
                 <Card className="hover:border-primary/50 transition-colors h-full">
                   <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                    <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors">
-                      {member.name}
-                    </CardTitle>
-                    <Badge variant={member.status === "active" ? "default" : "secondary"}>
+                    <div className="space-y-1 min-w-0">
+                      <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors">
+                        {member.name}
+                      </CardTitle>
+                      {(member as { isFreelancer?: boolean }).isFreelancer && (
+                        <div className="flex items-center gap-1">
+                          <Briefcase className="h-3 w-3 text-amber-600" />
+                          <span className="text-xs font-medium text-amber-600">Freelancer</span>
+                        </div>
+                      )}
+                    </div>
+                    <Badge variant={member.status === "active" ? "default" : "secondary"} className="shrink-0 ml-2">
                       {member.status === "active" ? "Ativo" : "Inativo"}
                     </Badge>
                   </CardHeader>

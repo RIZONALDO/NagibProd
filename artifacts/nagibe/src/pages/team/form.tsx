@@ -6,6 +6,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { TEAM_ROLES } from "@/lib/constants";
 import { TeamMember } from "@workspace/api-client-react";
 
@@ -16,6 +17,7 @@ const teamMemberSchema = z.object({
   phone: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
   status: z.enum(["active", "inactive"]),
+  isFreelancer: z.boolean().default(false),
 });
 
 export type TeamMemberFormValues = z.infer<typeof teamMemberSchema>;
@@ -36,6 +38,7 @@ export function TeamMemberForm({ defaultValues, onSubmit, isSubmitting }: TeamMe
       phone: defaultValues?.phone || "",
       notes: defaultValues?.notes || "",
       status: defaultValues?.status || "active",
+      isFreelancer: defaultValues?.isFreelancer ?? false,
     },
   });
 
@@ -140,6 +143,27 @@ export function TeamMemberForm({ defaultValues, onSubmit, isSubmitting }: TeamMe
                   <Input placeholder="(11) 99999-9999" {...field} value={field.value || ""} />
                 </FormControl>
                 <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="isFreelancer"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">Freelancer</FormLabel>
+                  <p className="text-sm text-muted-foreground">
+                    Membro externo contratado por projeto
+                  </p>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
               </FormItem>
             )}
           />

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq, ilike, and } from "drizzle-orm";
+import { eq, ilike, and, or } from "drizzle-orm";
 import { db, teamMembersTable, activityLogsTable } from "@workspace/db";
 import {
   ListTeamMembersQueryParams,
@@ -21,7 +21,11 @@ router.get("/team", async (req, res): Promise<void> => {
   const { search, status, role } = query.data;
 
   const conditions = [];
-  if (search) conditions.push(ilike(teamMembersTable.name, `%${search}%`));
+  if (search) conditions.push(or(
+    ilike(teamMembersTable.name, `%${search}%`),
+    ilike(teamMembersTable.primaryRole, `%${search}%`),
+    ilike(teamMembersTable.secondaryRole, `%${search}%`)
+  ));
   if (status) conditions.push(eq(teamMembersTable.status, status));
   if (role) conditions.push(eq(teamMembersTable.primaryRole, role));
 
@@ -53,6 +57,7 @@ router.post("/team", async (req, res): Promise<void> => {
     notes: parsed.data.notes ?? null,
     avatarUrl: parsed.data.avatarUrl ?? null,
     status: parsed.data.status ?? "active",
+    isFreelancer: req.body.isFreelancer === true || req.body.isFreelancer === "true" ? true : false,
   }).returning();
 
   await db.insert(activityLogsTable).values({
@@ -113,6 +118,7 @@ router.patch("/team/:id", async (req, res): Promise<void> => {
   if (parsed.data.notes !== undefined) updateData.notes = parsed.data.notes;
   if (parsed.data.avatarUrl !== undefined) updateData.avatarUrl = parsed.data.avatarUrl;
   if (parsed.data.status !== undefined) updateData.status = parsed.data.status;
+  if (req.body.isFreelancer !== undefined) updateData.isFreelancer = req.body.isFreelancer === true || req.body.isFreelancer === "true";
 
   const [member] = await db
     .update(teamMembersTable)

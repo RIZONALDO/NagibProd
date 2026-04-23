@@ -11,6 +11,7 @@ export const teamMembersTable = pgTable("team_members", {
   notes: text("notes"),
   avatarUrl: text("avatar_url"),
   status: text("status").notNull().default("active"),
+  isFreelancer: boolean("is_freelancer").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
