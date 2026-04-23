@@ -7,6 +7,7 @@ import activityRouter from "./activity";
 import dashboardRouter from "./dashboard";
 import authRouter from "./auth";
 import settingsRouter from "./settings";
+import calendarRouter from "./calendar";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use(equipmentRouter);
 router.use(shootsRouter);
 router.use(activityRouter);
 router.use(settingsRouter);
+router.use(calendarRouter);
 
 export default router;

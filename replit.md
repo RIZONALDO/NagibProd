@@ -34,8 +34,9 @@ Full-stack operational management system for Nagibe Produção, a video/photogra
 4. **Diárias** — Shoot management with team/equipment assignment
 5. **Saída de Equipamentos** — Equipment checkout with checklist
 6. **Devolução de Equipamentos** — Equipment return with damage tracking
-7. **WhatsApp Mirror** — Generate formatted text to share via WhatsApp
-8. **Histórico** — Activity log with filters
+7. **Calendário** — Monthly/weekly calendar view with shoot cards, filters, detail modal
+8. **WhatsApp Mirror** — Generate formatted text to share via WhatsApp
+9. **Histórico** — Activity log with filters
 9. **Configurações** (admin only):
    - **Usuários** — CRUD with profile, status, reset password
    - **Perfis de Acesso** — Administrador, Operador, Revisor, Visualizador

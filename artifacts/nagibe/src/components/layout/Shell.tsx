@@ -5,6 +5,7 @@ import {
   Video, 
   Camera, 
   ActivitySquare,
+  CalendarDays,
   Settings,
   Menu,
   LogOut,
@@ -26,6 +27,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/shoots", label: "Diárias", icon: Video },
+  { href: "/calendar", label: "Calendário", icon: CalendarDays },
   { href: "/team", label: "Equipe", icon: Users },
   { href: "/equipment", label: "Equipamentos", icon: Camera },
   { href: "/activity", label: "Histórico", icon: ActivitySquare },

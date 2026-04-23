@@ -19,6 +19,7 @@ import ShootDetail from "@/pages/shoots/[id]";
 import CheckoutShoot from "@/pages/shoots/[id]/checkout";
 import ReturnShoot from "@/pages/shoots/[id]/return";
 import ActivityLog from "@/pages/activity/index";
+import CalendarPage from "@/pages/calendar/index";
 import SettingsPage from "@/pages/settings/index";
 
 const queryClient = new QueryClient();
@@ -85,6 +86,10 @@ function Router() {
       </Route>
       <Route path="/shoots/:id/return">
         {() => <ProtectedRoute component={ReturnShoot} />}
+      </Route>
+
+      <Route path="/calendar">
+        {() => <ProtectedRoute component={CalendarPage} />}
       </Route>
 
       <Route path="/activity">
