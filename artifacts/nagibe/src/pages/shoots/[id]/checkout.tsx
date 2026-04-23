@@ -5,7 +5,7 @@ import { useLocation, useParams } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, CheckCircle2, User, Camera } from "lucide-react";
+import { ArrowLeft, CheckCircle2, User, Camera, ChevronDown, ChevronRight } from "lucide-react";
 import { EQUIPMENT_CATEGORIES } from "@/lib/constants";
 import { Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -93,6 +93,11 @@ export default function CheckoutShoot() {
   const [receivedBy, setReceivedBy] = useState("");
   
   const [itemConditions, setItemConditions] = useState<Record<number, { conditionOut: string, notes: string }>>({});
+  const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({});
+
+  const toggleExpanded = (equipId: number) => {
+    setExpandedItems(prev => ({ ...prev, [equipId]: !prev[equipId] }));
+  };
 
   const teamOptions: TeamMemberOption[] = (shoot?.team ?? []).map(m => ({
     name: m.teamMember.name,
@@ -222,49 +227,72 @@ export default function CheckoutShoot() {
         <Card>
           <CardHeader>
             <CardTitle>Checklist de Equipamentos</CardTitle>
-            <CardDescription>Verifique o estado de cada item antes da saída.</CardDescription>
+            <CardDescription>Verifique o estado de cada item antes da saída. Clique para expandir e preencher.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {shoot.equipmentItems.map((item) => {
-              const CatIcon = EQUIPMENT_CATEGORIES.find(c => c.value === item.equipment?.category)?.icon || Camera;
-              return (
-              <div key={item.id} className="border rounded-lg p-4 bg-muted/20">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <CatIcon className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-base">{item.equipment.name}</p>
-                      <p className="text-sm text-muted-foreground">Código: {item.equipment.internalCode || 'N/A'}</p>
-                    </div>
+          <CardContent className="p-0">
+            <div className="divide-y">
+              {shoot.equipmentItems.map((item) => {
+                const CatIcon = EQUIPMENT_CATEGORIES.find(c => c.value === item.equipment?.category)?.icon || Camera;
+                const isExpanded = !!expandedItems[item.equipmentId];
+                const condOut = itemConditions[item.equipmentId]?.conditionOut || "";
+                const notesVal = itemConditions[item.equipmentId]?.notes || "";
+                const hasFilled = condOut || notesVal;
+                return (
+                  <div key={item.id}>
+                    {/* Collapsed row header */}
+                    <button
+                      type="button"
+                      onClick={() => toggleExpanded(item.equipmentId)}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors text-left"
+                    >
+                      <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+                        <CatIcon className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm leading-tight truncate">{item.equipment.name}</p>
+                        <p className="text-xs text-muted-foreground">{item.equipment.internalCode || 'Sem código'}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-xs font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded">
+                          Qtd: {item.quantity}
+                        </span>
+                        {hasFilled && (
+                          <span className="text-xs font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                            Preenchido
+                          </span>
+                        )}
+                        {isExpanded
+                          ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          : <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        }
+                      </div>
+                    </button>
+
+                    {/* Expanded detail panel */}
+                    {isExpanded && (
+                      <div className="px-4 pb-4 pt-1 bg-muted/20 border-t grid sm:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Condição de Saída</Label>
+                          <Input
+                            placeholder="Ex: OK, com marca de uso..."
+                            value={condOut}
+                            onChange={e => handleConditionChange(item.equipmentId, 'conditionOut', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Observações</Label>
+                          <Input
+                            placeholder="Acessórios inclusos..."
+                            value={notesVal}
+                            onChange={e => handleConditionChange(item.equipmentId, 'notes', e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="bg-primary text-primary-foreground px-3 py-1 rounded font-medium text-sm shrink-0">
-                    Qtd: {item.quantity}
-                  </div>
-                </div>
-                
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs">Condição de Saída</Label>
-                    <Input 
-                      placeholder="Ex: OK, com marca de uso..."
-                      value={itemConditions[item.equipmentId]?.conditionOut || ""}
-                      onChange={e => handleConditionChange(item.equipmentId, 'conditionOut', e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs">Observações</Label>
-                    <Input 
-                      placeholder="Acessórios inclusos..."
-                      value={itemConditions[item.equipmentId]?.notes || ""}
-                      onChange={e => handleConditionChange(item.equipmentId, 'notes', e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
 
