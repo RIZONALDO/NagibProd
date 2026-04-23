@@ -10,6 +10,7 @@ export const shootTeamTable = pgTable("shoot_team", {
   teamMemberId: integer("team_member_id").notNull().references(() => teamMembersTable.id, { onDelete: "cascade" }),
   role: text("role").notNull(),
   confirmed: boolean("confirmed").notNull().default(false),
+  travelDiarias: integer("travel_diarias").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

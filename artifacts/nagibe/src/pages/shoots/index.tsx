@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, Video, Calendar as CalendarIcon, MapPin } from "lucide-react";
+import { Search, Plus, Video, Calendar as CalendarIcon, MapPin, FileBarChart2 } from "lucide-react";
 import { Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
@@ -30,9 +30,16 @@ export default function ShootsList() {
             <h1 className="text-3xl font-bold tracking-tight">Diárias</h1>
             <p className="text-muted-foreground">Gerencie as gravações e produções.</p>
           </div>
-          <Link href="/shoots/new" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2">
-            <Plus className="mr-2 h-4 w-4" /> Nova Diária
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/reports/diarias">
+              <Button variant="outline" size="sm">
+                <FileBarChart2 className="h-4 w-4 mr-1" /> Relatório
+              </Button>
+            </Link>
+            <Link href="/shoots/new" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2">
+              <Plus className="mr-2 h-4 w-4" /> Nova Diária
+            </Link>
+          </div>
         </div>
 
         <div className="flex flex-col md:flex-row gap-4">

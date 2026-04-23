@@ -31,6 +31,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ShootForm, ShootFormValues } from "./form";
+import { TravelSection } from "./TravelSection";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { TEAM_ROLES, EQUIPMENT_CATEGORIES } from "@/lib/constants";
@@ -523,6 +524,20 @@ export default function ShootDetail() {
                     ))}
                   </div>
                 )}
+                <div className="mt-4 pt-4 border-t">
+                  <TravelSection
+                    shootId={id}
+                    hasTravel={!!(shoot as { hasTravel?: boolean }).hasTravel}
+                    team={(shoot.team ?? []).map(m => ({
+                      id: m.id,
+                      teamMemberId: m.teamMemberId,
+                      role: m.role,
+                      travelDiarias: (m as { travelDiarias?: number }).travelDiarias ?? 0,
+                      teamMember: m.teamMember,
+                    }))}
+                    onRefresh={() => queryClient.invalidateQueries({ queryKey: getGetShootQueryKey(id) })}
+                  />
+                </div>
               </CardContent>
             </Card>
 

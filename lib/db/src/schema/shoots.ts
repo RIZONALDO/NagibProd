@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -11,6 +11,7 @@ export const shootsTable = pgTable("shoots", {
   whatsappSummary: text("whatsapp_summary"),
   producerName: text("producer_name"),
   clientProject: text("client_project"),
+  hasTravel: boolean("has_travel").notNull().default(false),
   priority: text("priority").notNull().default("medium"),
   status: text("status").notNull().default("planned"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

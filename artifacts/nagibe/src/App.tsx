@@ -22,6 +22,7 @@ import ReturnShoot from "@/pages/shoots/[id]/return";
 import ActivityLog from "@/pages/activity/index";
 import CalendarPage from "@/pages/calendar/index";
 import SettingsPage from "@/pages/settings/index";
+import DiariasReport from "@/pages/reports/DiariasReport";
 
 const queryClient = new QueryClient();
 
@@ -95,6 +96,10 @@ function Router() {
 
       <Route path="/activity">
         {() => <ProtectedRoute component={ActivityLog} />}
+      </Route>
+
+      <Route path="/reports/diarias">
+        {() => <ProtectedRoute component={DiariasReport} />}
       </Route>
 
       <Route path="/settings">

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq, ilike, and, desc } from "drizzle-orm";
+import { eq, ilike, and, desc, gte, lte } from "drizzle-orm";
 import {
   db,
   shootsTable,
@@ -149,6 +149,7 @@ router.get("/shoots/:id", async (req, res): Promise<void> => {
     teamMemberId: r.shoot_team.teamMemberId,
     role: r.shoot_team.role,
     confirmed: r.shoot_team.confirmed,
+    travelDiarias: r.shoot_team.travelDiarias,
     teamMember: r.team_members ? serializeMember(r.team_members) : null,
   }));
 
@@ -266,6 +267,7 @@ router.patch("/shoots/:id", async (req, res): Promise<void> => {
   if (parsed.data.clientProject !== undefined) updateData.clientProject = parsed.data.clientProject;
   if (parsed.data.priority !== undefined) updateData.priority = parsed.data.priority;
   if (parsed.data.status !== undefined) updateData.status = parsed.data.status;
+  if (typeof req.body.hasTravel === "boolean") updateData.hasTravel = req.body.hasTravel;
 
   const [shoot] = await db
     .update(shootsTable)
@@ -329,6 +331,7 @@ router.get("/shoots/:id/team", async (req, res): Promise<void> => {
     teamMemberId: r.shoot_team.teamMemberId,
     role: r.shoot_team.role,
     confirmed: r.shoot_team.confirmed,
+    travelDiarias: r.shoot_team.travelDiarias,
     teamMember: r.team_members ? serializeMember(r.team_members) : null,
   })));
 });
@@ -391,6 +394,8 @@ router.patch("/shoots/:id/team/:memberId", async (req, res): Promise<void> => {
   const updateData: Record<string, unknown> = {};
   if (parsed.data.role !== undefined) updateData.role = parsed.data.role;
   if (parsed.data.confirmed !== undefined) updateData.confirmed = parsed.data.confirmed;
+  const rawTD = req.body.travelDiarias;
+  if (typeof rawTD === "number" && Number.isInteger(rawTD) && rawTD >= 0) updateData.travelDiarias = rawTD;
 
   const [row] = await db
     .update(shootTeamTable)
@@ -416,6 +421,18 @@ router.patch("/shoots/:id/team/:memberId", async (req, res): Promise<void> => {
     confirmed: row.confirmed,
     teamMember: member ? serializeMember(member) : null,
   });
+});
+
+// Bulk apply travel diarias to all team members of a shoot
+router.post("/shoots/:id/team/apply-travel", async (req, res): Promise<void> => {
+  const shootId = parseInt(String(req.params.id), 10);
+  if (isNaN(shootId)) { res.status(400).json({ error: "Invalid shoot id" }); return; }
+  const count = req.body.count;
+  if (typeof count !== "number" || !Number.isInteger(count) || count < 0) {
+    res.status(400).json({ error: "count must be a non-negative integer" }); return;
+  }
+  await db.update(shootTeamTable).set({ travelDiarias: count }).where(eq(shootTeamTable.shootId, shootId));
+  res.json({ ok: true });
 });
 
 router.delete("/shoots/:id/team/:memberId", async (req, res): Promise<void> => {
@@ -845,6 +862,67 @@ router.get("/shoots/:id/return-details", async (req, res): Promise<void> => {
       equipment: i.equipment ? serializeEquipment(i.equipment) : null,
     })),
   });
+});
+
+// ── Diárias Report ──
+router.get("/reports/diarias", async (req, res): Promise<void> => {
+  const from = String(req.query.from ?? "");
+  const to = String(req.query.to ?? "");
+
+  const conditions = [];
+  if (from) conditions.push(gte(shootsTable.date, from));
+  if (to) conditions.push(lte(shootsTable.date, to));
+
+  const rows = await db
+    .select({
+      teamMemberId: shootTeamTable.teamMemberId,
+      memberName: teamMembersTable.name,
+      primaryRole: teamMembersTable.primaryRole,
+      travelDiarias: shootTeamTable.travelDiarias,
+      shootId: shootsTable.id,
+      shootDate: shootsTable.date,
+      shootLocation: shootsTable.location,
+    })
+    .from(shootTeamTable)
+    .innerJoin(shootsTable, eq(shootTeamTable.shootId, shootsTable.id))
+    .innerJoin(teamMembersTable, eq(shootTeamTable.teamMemberId, teamMembersTable.id))
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(teamMembersTable.name, shootsTable.date);
+
+  // Aggregate per member
+  const map = new Map<number, {
+    teamMemberId: number;
+    memberName: string;
+    primaryRole: string;
+    shoots: number;
+    totalTravelDiarias: number;
+    shootDetails: { id: number; date: string; location: string; travelDiarias: number }[];
+  }>();
+
+  for (const row of rows) {
+    let entry = map.get(row.teamMemberId);
+    if (!entry) {
+      entry = {
+        teamMemberId: row.teamMemberId,
+        memberName: row.memberName,
+        primaryRole: row.primaryRole ?? "",
+        shoots: 0,
+        totalTravelDiarias: 0,
+        shootDetails: [],
+      };
+      map.set(row.teamMemberId, entry);
+    }
+    entry.shoots += 1;
+    entry.totalTravelDiarias += row.travelDiarias ?? 0;
+    entry.shootDetails.push({
+      id: row.shootId,
+      date: row.shootDate,
+      location: row.shootLocation,
+      travelDiarias: row.travelDiarias ?? 0,
+    });
+  }
+
+  res.json(Array.from(map.values()));
 });
 
 export default router;
