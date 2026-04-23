@@ -94,7 +94,7 @@ export function TravelSection({ shootId, hasTravel, team, onRefresh }: TravelSec
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm font-medium">
           <Car className="h-4 w-4 text-muted-foreground" />
-          <span>Houve deslocamento?</span>
+          <span>Houve viagem?</span>
         </div>
         <div className="flex gap-2">
           <button
