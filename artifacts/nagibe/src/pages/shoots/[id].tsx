@@ -47,7 +47,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ShootForm, ShootFormValues } from "./form";
 import { TravelSection } from "./TravelSection";
-import { format } from "date-fns";
+import { format, differenceInCalendarDays, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { TEAM_ROLES, EQUIPMENT_CATEGORIES } from "@/lib/constants";
 import { 
@@ -104,6 +104,15 @@ export default function ShootDetail() {
   const addEquipMutation = useAddShootEquipment();
   const removeEquipMutation = useRemoveShootEquipment();
 
+  const canFinalize = (s: typeof shoot) => {
+    const refDate = (s as { endDate?: string | null }).endDate ?? s.date;
+    try {
+      return differenceInCalendarDays(new Date(), parseISO(refDate)) >= 0;
+    } catch {
+      return false;
+    }
+  };
+
   const handleFinalizeShoot = () => {
     updateMutation.mutate({ id, data: { status: "closed" } }, {
       onSuccess: () => {
@@ -113,6 +122,19 @@ export default function ShootDetail() {
       },
       onError: (err) => {
         toast({ title: "Erro ao finalizar pauta", description: String(err), variant: "destructive" });
+      }
+    });
+  };
+
+  const handleCancelShoot = () => {
+    updateMutation.mutate({ id, data: { status: "cancelled" } }, {
+      onSuccess: () => {
+        toast({ title: "Pauta cancelada", description: "A pauta foi marcada como cancelada." });
+        queryClient.invalidateQueries({ queryKey: getGetShootQueryKey(id) });
+        queryClient.invalidateQueries({ queryKey: getListShootsQueryKey() });
+      },
+      onError: (err) => {
+        toast({ title: "Erro ao cancelar pauta", description: String(err), variant: "destructive" });
       }
     });
   };
@@ -417,20 +439,51 @@ export default function ShootDetail() {
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            {isOperator && shoot.status !== "closed" && (
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Finalizar — só disponível após o dia da pauta */}
+            {isOperator && shoot.status !== "closed" && shoot.status !== "cancelled" && (
               <Button
                 className="bg-green-600 hover:bg-green-700 text-white"
                 onClick={handleFinalizeShoot}
-                disabled={updateMutation.isPending}
+                disabled={updateMutation.isPending || !canFinalize(shoot)}
+                title={!canFinalize(shoot) ? "Só é possível finalizar após o término da pauta" : undefined}
               >
                 <CheckCircle2 className="h-4 w-4 mr-2" /> Pauta Finalizada
               </Button>
             )}
+
+            {/* Cancelar */}
+            {shoot.status !== "closed" && shoot.status !== "cancelled" && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950/30">
+                    <X className="h-4 w-4 mr-2" /> Cancelar Pauta
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Cancelar esta pauta?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      A pauta será marcada como cancelada. Esta ação pode ser desfeita editando o status da pauta manualmente.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Voltar</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleCancelShoot}
+                      className="bg-red-600 text-white hover:bg-red-700"
+                    >
+                      Confirmar Cancelamento
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+
             <Button variant="outline" onClick={() => setIsEditing(true)}>
               <Edit className="h-4 w-4 mr-2" /> Editar
             </Button>
-            
+
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" size="icon">

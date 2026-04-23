@@ -17,4 +17,5 @@ export const UpdateShootBodyStatus = {
   in_progress: "in_progress",
   return_pending: "return_pending",
   closed: "closed",
+  cancelled: "cancelled",
 } as const;

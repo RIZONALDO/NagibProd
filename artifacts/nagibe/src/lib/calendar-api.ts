@@ -65,6 +65,7 @@ export const STATUS_LABELS: Record<string, string> = {
   in_progress: "Em Andamento",
   return_pending: "Dev. Pendente",
   closed: "Finalizada",
+  cancelled: "Cancelada",
 };
 
 /* Solid dot color (for small indicators) */
@@ -76,6 +77,7 @@ export const STATUS_COLORS: Record<string, string> = {
   in_progress: "bg-emerald-500",
   return_pending: "bg-orange-500",
   closed: "bg-green-500",
+  cancelled: "bg-red-400",
 };
 
 /* Card tint: background + border + text */
@@ -87,6 +89,7 @@ export const STATUS_CARD: Record<string, { bg: string; border: string; text: str
   in_progress:        { bg: "bg-emerald-50 dark:bg-emerald-950/40",border: "border-emerald-200 dark:border-emerald-800",text: "text-emerald-800 dark:text-emerald-200",dot: "bg-emerald-500"},
   return_pending:     { bg: "bg-orange-50 dark:bg-orange-950/40", border: "border-orange-200 dark:border-orange-800",text: "text-orange-800 dark:text-orange-200", dot: "bg-orange-500"  },
   closed:             { bg: "bg-green-50 dark:bg-green-950/40",   border: "border-green-200 dark:border-green-800",  text: "text-green-800 dark:text-green-200",  dot: "bg-green-500"   },
+  cancelled:          { bg: "bg-red-50 dark:bg-red-950/40",       border: "border-red-200 dark:border-red-800",      text: "text-red-700 dark:text-red-300",      dot: "bg-red-400"     },
 };
 
 export const STATUS_BG: Record<string, string> = Object.fromEntries(

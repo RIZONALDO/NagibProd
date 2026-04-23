@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq, ilike, and, desc, gte, lte } from "drizzle-orm";
+import { eq, ilike, and, desc, gte, lte, or, notInArray, inArray } from "drizzle-orm";
 import {
   db,
   shootsTable,
@@ -75,10 +75,25 @@ router.get("/shoots", async (req, res): Promise<void> => {
     return;
   }
   const { search, status, date } = query.data;
+  const group    = req.query.group    as string | undefined;
+  const priority = req.query.priority as string | undefined;
 
   const conditions = [];
-  if (search) conditions.push(ilike(shootsTable.location, `%${search}%`));
-  if (status) conditions.push(eq(shootsTable.status, status));
+  if (search) conditions.push(or(
+    ilike(shootsTable.location, `%${search}%`),
+    ilike(shootsTable.title, `%${search}%`),
+    ilike(shootsTable.clientProject, `%${search}%`),
+  ));
+  if (status) {
+    conditions.push(eq(shootsTable.status, status));
+  } else if (group === "active") {
+    conditions.push(notInArray(shootsTable.status, ["closed", "cancelled"]));
+  } else if (group === "closed") {
+    conditions.push(eq(shootsTable.status, "closed"));
+  } else if (group === "cancelled") {
+    conditions.push(eq(shootsTable.status, "cancelled"));
+  }
+  if (priority) conditions.push(eq(shootsTable.priority, priority));
   if (date) conditions.push(eq(shootsTable.date, date));
 
   const shoots = await db

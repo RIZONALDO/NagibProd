@@ -571,6 +571,7 @@ export const UpdateShootBody = zod.object({
       "in_progress",
       "return_pending",
       "closed",
+      "cancelled",
     ])
     .optional(),
 });
@@ -593,6 +594,7 @@ export const UpdateShootResponse = zod.object({
     "in_progress",
     "return_pending",
     "closed",
+    "cancelled",
   ]),
   createdAt: zod.string(),
   updatedAt: zod.string(),

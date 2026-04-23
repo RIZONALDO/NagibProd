@@ -8,7 +8,7 @@ import {
   SHOOT_PRIORITY_COLORS,
   SHOOT_PRIORITY_LABELS
 } from "@/lib/constants"
-import { CheckCircle2, TriangleAlert } from "lucide-react"
+import { CheckCircle2, TriangleAlert, XCircle } from "lucide-react"
 import { differenceInCalendarDays, parseISO } from "date-fns"
 
 export function EquipmentStatusBadge({ status, className }: { status: string, className?: string }) {
@@ -68,7 +68,7 @@ export function ShootPriorityBadge({ priority, className }: { priority: string, 
 
 /** Returns true if the shoot is not closed but its last day passed more than 1 day ago */
 export function isShootOverdue(shoot: { status: string; date: string; endDate?: string | null }): boolean {
-  if (shoot.status === "closed") return false;
+  if (shoot.status === "closed" || shoot.status === "cancelled") return false;
   const referenceDate = shoot.endDate ?? shoot.date;
   try {
     const diff = differenceInCalendarDays(new Date(), parseISO(referenceDate));
