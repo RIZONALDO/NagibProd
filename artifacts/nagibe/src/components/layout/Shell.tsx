@@ -136,7 +136,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <Video className="h-5 w-5" />
           </div>
           {!isCollapsed && (
-            <span className="font-bold text-lg tracking-tight truncate">Nagibe Produção</span>
+            <div className="min-w-0">
+              <p className="font-bold text-lg tracking-tight leading-tight truncate">Nagibe Produção</p>
+              <p className="text-[10px] font-light text-muted-foreground tracking-wide leading-tight">Sistema de Gestão&nbsp;&nbsp;v1.0</p>
+            </div>
           )}
         </div>
 
@@ -239,10 +242,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
         {/* Mobile Header */}
         <header className="md:hidden flex items-center justify-between border-b bg-card px-4 h-14 shrink-0">
           <div className="flex items-center gap-2">
-            <div className="bg-primary text-primary-foreground p-1 rounded-md">
+            <div className="bg-primary text-primary-foreground p-1 rounded-md shrink-0">
               <Video className="h-4 w-4" />
             </div>
-            <span className="font-bold tracking-tight">Nagibe</span>
+            <div>
+              <p className="font-bold tracking-tight leading-tight text-sm">Nagibe Produção</p>
+              <p className="text-[9px] font-light text-muted-foreground tracking-wide leading-tight">Sistema de Gestão&nbsp;&nbsp;v1.0</p>
+            </div>
           </div>
           <div className="flex items-center gap-1">
             <ThemeToggleButton />
@@ -256,10 +262,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <SheetContent side="right" className="w-[240px] sm:w-[280px]">
                 <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
                 <div className="flex items-center gap-2 mb-8 mt-2">
-                  <div className="bg-primary text-primary-foreground p-1.5 rounded-md">
+                  <div className="bg-primary text-primary-foreground p-1.5 rounded-md shrink-0">
                     <Video className="h-5 w-5" />
                   </div>
-                  <span className="font-bold text-lg tracking-tight">Nagibe Produção</span>
+                  <div>
+                    <p className="font-bold text-lg tracking-tight leading-tight">Nagibe Produção</p>
+                    <p className="text-[10px] font-light text-muted-foreground tracking-wide leading-tight">Sistema de Gestão&nbsp;&nbsp;v1.0</p>
+                  </div>
                 </div>
                 <NavLinks onClick={() => setIsMobileMenuOpen(false)} />
                 {user && (
