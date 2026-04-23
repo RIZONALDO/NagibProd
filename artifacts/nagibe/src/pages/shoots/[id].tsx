@@ -81,7 +81,7 @@ export default function ShootDetail() {
   const [equipQuantity, setEquipQuantity] = useState<string>("1");
 
   // Linked items suggestion state
-  interface OptionalLinkItem { link: EquipmentLink; quantity: number; selected: boolean }
+  interface OptionalLinkItem { link: EquipmentLink; quantity: number; selected: boolean; required: boolean }
   const [linkedSuggestion, setLinkedSuggestion] = useState<{
     parentItemId: number;
     parentName: string;
@@ -217,61 +217,28 @@ export default function ShootDetail() {
         // Fetch and process linked items
         try {
           const links = await getEquipmentLinks(eqId);
-          if (links.length === 0) {
-            toast({ title: "Equipamento adicionado" });
-            return;
-          }
+          toast({ title: "Equipamento adicionado" });
+
+          if (links.length === 0) return;
 
           const currentEquipIds = new Set(
             shoot?.equipmentItems?.map(i => i.equipmentId) ?? []
           );
 
-          const requiredLinks = links.filter(l => l.required && !currentEquipIds.has(l.linkedEquipmentId));
-          const optionalLinks = links.filter(l => !l.required && !currentEquipIds.has(l.linkedEquipmentId));
+          const newLinks = links.filter(l => !currentEquipIds.has(l.linkedEquipmentId));
+          if (newLinks.length === 0) return;
 
-          // Auto-add required linked items
-          for (const link of requiredLinks) {
-            await fetch(
-              `${import.meta.env.BASE_URL.replace(/\/$/, "")}/api/shoots/${id}/equipment`,
-              {
-                method: "POST",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  equipmentId: link.linkedEquipmentId,
-                  quantity: link.defaultQuantity,
-                  isLinkedItem: true,
-                  parentShootEquipmentId: (parentRow as { id: number }).id,
-                }),
-              }
-            );
-          }
-
-          if (requiredLinks.length > 0 || optionalLinks.length > 0) {
-            queryClient.invalidateQueries({ queryKey: getGetShootQueryKey(id) });
-          }
-
-          if (requiredLinks.length > 0) {
-            toast({
-              title: `${requiredLinks.length} item(s) obrigatório(s) adicionado(s) automaticamente`,
-              description: requiredLinks.map(l => l.linkedEquipment.name).join(", "),
-            });
-          } else {
-            toast({ title: "Equipamento adicionado" });
-          }
-
-          // Show suggestion dialog for optional linked items
-          if (optionalLinks.length > 0) {
-            setLinkedSuggestion({
-              parentItemId: (parentRow as { id: number }).id,
-              parentName: eqName,
-              items: optionalLinks.map(link => ({
-                link,
-                quantity: link.defaultQuantity,
-                selected: true,
-              })),
-            });
-          }
+          // Show unified dialog for ALL linked items (required pre-checked, optional pre-checked)
+          setLinkedSuggestion({
+            parentItemId: (parentRow as { id: number }).id,
+            parentName: eqName,
+            items: newLinks.map(link => ({
+              link,
+              quantity: link.defaultQuantity,
+              selected: true,
+              required: link.required,
+            })),
+          });
         } catch {
           toast({ title: "Equipamento adicionado" });
         }
@@ -306,7 +273,7 @@ export default function ShootDetail() {
     queryClient.invalidateQueries({ queryKey: getGetShootQueryKey(id) });
     setIsAddingLinked(false);
     setLinkedSuggestion(null);
-    if (toAdd.length > 0) toast({ title: `${toAdd.length} item(s) opcional(is) adicionado(s)` });
+    if (toAdd.length > 0) toast({ title: `${toAdd.length} item(s) vinculado(s) adicionado(s)` });
   }, [linkedSuggestion, id, queryClient]);
 
   const handleRemoveEquipment = (itemId: number) => {
@@ -937,71 +904,126 @@ export default function ShootDetail() {
         </div>
       </div>
 
-      {/* Optional linked items suggestion dialog */}
+      {/* Linked items suggestion dialog (required + optional) */}
       <Dialog open={!!linkedSuggestion} onOpenChange={(open) => { if (!open) setLinkedSuggestion(null); }}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Link2 className="h-5 w-5 text-primary" />
-              Itens sugeridos para {linkedSuggestion?.parentName}
+              Itens vinculados a {linkedSuggestion?.parentName}
             </DialogTitle>
+            <p className="text-sm text-muted-foreground pt-1">
+              Deseja adicionar os itens abaixo junto com este equipamento?
+            </p>
           </DialogHeader>
 
-          <div className="py-2 space-y-1">
-            <p className="text-sm text-muted-foreground mb-3">
-              Os itens abaixo costumam acompanhar este equipamento. Selecione os que deseja incluir:
-            </p>
-
-            {linkedSuggestion?.items.map((optItem, idx) => {
+          <div className="py-1 space-y-2">
+            {linkedSuggestion?.items.some(i => i.required) && (
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                Obrigatórios
+              </p>
+            )}
+            {linkedSuggestion?.items.filter(i => i.required).map((optItem, idx) => {
               const avail = optItem.link.linkedEquipment.availableQuantity;
               const unavailable = avail === 0;
               return (
                 <div
-                  key={optItem.link.id}
-                  className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${
-                    optItem.selected ? "border-primary/40 bg-primary/5" : "border-border bg-muted/20"
-                  } ${unavailable ? "opacity-60" : ""}`}
+                  key={`req-${optItem.link.id}`}
+                  className={`flex items-center gap-3 p-3 rounded-xl border transition-colors border-primary/30 bg-primary/5 ${unavailable ? "opacity-60" : ""}`}
                 >
                   <Checkbox
-                    id={`opt-${idx}`}
                     checked={optItem.selected && !unavailable}
                     disabled={unavailable}
                     onCheckedChange={(checked) =>
                       setLinkedSuggestion(prev => prev ? {
                         ...prev,
-                        items: prev.items.map((it, i) => i === idx ? { ...it, selected: Boolean(checked) } : it)
+                        items: prev.items.map((it) => it.link.id === optItem.link.id ? { ...it, selected: Boolean(checked) } : it)
+                      } : prev)
+                    }
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-medium truncate">{optItem.link.linkedEquipment.name}</p>
+                      <span className="text-[10px] font-semibold bg-primary/15 text-primary px-1.5 py-0.5 rounded-full shrink-0">Obrigatório</span>
+                    </div>
+                    <p className={`text-xs ${unavailable ? "text-red-500" : "text-muted-foreground"}`}>
+                      {unavailable ? "Indisponível no estoque" : `${avail} disponível(is)`}
+                    </p>
+                    {optItem.link.notes && (
+                      <p className="text-xs text-muted-foreground/70 italic mt-0.5">{optItem.link.notes}</p>
+                    )}
+                  </div>
+                  <Input
+                    type="number"
+                    min="1"
+                    max={avail > 0 ? avail : 99}
+                    disabled={unavailable || !optItem.selected}
+                    value={optItem.quantity}
+                    onChange={(e) =>
+                      setLinkedSuggestion(prev => prev ? {
+                        ...prev,
+                        items: prev.items.map((it) =>
+                          it.link.id === optItem.link.id ? { ...it, quantity: Math.max(1, parseInt(e.target.value) || 1) } : it
+                        )
+                      } : prev)
+                    }
+                    className="w-16 h-8 text-center text-sm shrink-0"
+                  />
+                  {unavailable && <AlertTriangle className="h-4 w-4 text-red-500 shrink-0" />}
+                </div>
+              );
+            })}
+
+            {linkedSuggestion?.items.some(i => !i.required) && (
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide pt-1">
+                Opcionais
+              </p>
+            )}
+            {linkedSuggestion?.items.filter(i => !i.required).map((optItem) => {
+              const avail = optItem.link.linkedEquipment.availableQuantity;
+              const unavailable = avail === 0;
+              return (
+                <div
+                  key={`opt-${optItem.link.id}`}
+                  className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${
+                    optItem.selected ? "border-border bg-muted/30" : "border-border bg-muted/10"
+                  } ${unavailable ? "opacity-60" : ""}`}
+                >
+                  <Checkbox
+                    checked={optItem.selected && !unavailable}
+                    disabled={unavailable}
+                    onCheckedChange={(checked) =>
+                      setLinkedSuggestion(prev => prev ? {
+                        ...prev,
+                        items: prev.items.map((it) => it.link.id === optItem.link.id ? { ...it, selected: Boolean(checked) } : it)
                       } : prev)
                     }
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{optItem.link.linkedEquipment.name}</p>
                     <p className={`text-xs ${unavailable ? "text-red-500" : "text-muted-foreground"}`}>
-                      {unavailable
-                        ? "Indisponível no estoque"
-                        : `${avail} disponível(is) no estoque`}
+                      {unavailable ? "Indisponível no estoque" : `${avail} disponível(is)`}
                     </p>
                     {optItem.link.notes && (
                       <p className="text-xs text-muted-foreground/70 italic mt-0.5">{optItem.link.notes}</p>
                     )}
                   </div>
-                  <div className="shrink-0">
-                    <Input
-                      type="number"
-                      min="1"
-                      max={avail > 0 ? avail : 99}
-                      disabled={unavailable || !optItem.selected}
-                      value={optItem.quantity}
-                      onChange={(e) =>
-                        setLinkedSuggestion(prev => prev ? {
-                          ...prev,
-                          items: prev.items.map((it, i) =>
-                            i === idx ? { ...it, quantity: Math.max(1, parseInt(e.target.value) || 1) } : it
-                          )
-                        } : prev)
-                      }
-                      className="w-16 h-8 text-center text-sm"
-                    />
-                  </div>
+                  <Input
+                    type="number"
+                    min="1"
+                    max={avail > 0 ? avail : 99}
+                    disabled={unavailable || !optItem.selected}
+                    value={optItem.quantity}
+                    onChange={(e) =>
+                      setLinkedSuggestion(prev => prev ? {
+                        ...prev,
+                        items: prev.items.map((it) =>
+                          it.link.id === optItem.link.id ? { ...it, quantity: Math.max(1, parseInt(e.target.value) || 1) } : it
+                        )
+                      } : prev)
+                    }
+                    className="w-16 h-8 text-center text-sm shrink-0"
+                  />
                   {unavailable && <AlertTriangle className="h-4 w-4 text-red-500 shrink-0" />}
                 </div>
               );
@@ -1010,7 +1032,7 @@ export default function ShootDetail() {
 
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => setLinkedSuggestion(null)}>
-              Pular
+              Não adicionar
             </Button>
             <Button
               onClick={handleConfirmOptionalLinked}
