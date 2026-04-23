@@ -43,6 +43,10 @@ import { Button } from "@/components/ui/button";
 import { ShootStatusBadge, ShootPriorityBadge, EquipmentStatusBadge, ShootOverdueBadge, isShootOverdue } from "@/components/ui/status-badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { ShootForm, ShootFormValues } from "./form";
 import { TravelSection } from "./TravelSection";
@@ -73,6 +77,7 @@ export default function ShootDetail() {
   // Inline add form states
   const [teamMemberId, setTeamMemberId] = useState<string>("");
   const [teamRole, setTeamRole] = useState<string>("");
+  const [teamMemberOpen, setTeamMemberOpen] = useState(false);
   
   const [equipmentId, setEquipmentId] = useState<string>("");
   const [equipQuantity, setEquipQuantity] = useState<string>("1");
@@ -586,20 +591,52 @@ export default function ShootDetail() {
 
                 {/* Inline quick-add form */}
                 <div className="flex gap-2 items-center">
-                  <Select value={teamMemberId} onValueChange={setTeamMemberId}>
-                    <SelectTrigger className="flex-1 h-9 text-sm">
-                      <SelectValue placeholder="Membro..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(teamMembers ?? [])
-                        .filter(tm => !shoot.team?.some(t => t.teamMemberId === tm.id))
-                        .map(tm => (
-                          <SelectItem key={tm.id} value={tm.id.toString()}>
-                            {tm.name} <span className="text-muted-foreground text-xs">({tm.primaryRole})</span>
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={teamMemberOpen} onOpenChange={setTeamMemberOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={teamMemberOpen}
+                        className="flex-1 h-9 text-sm justify-between font-normal"
+                      >
+                        <span className="truncate">
+                          {teamMemberId
+                            ? (teamMembers ?? []).find(tm => tm.id.toString() === teamMemberId)?.name ?? "Membro..."
+                            : "Membro..."}
+                        </span>
+                        <ChevronsUpDown className="ml-1 h-3.5 w-3.5 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64 p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Buscar membro..." className="h-9" />
+                        <CommandList>
+                          <CommandEmpty>Nenhum membro encontrado.</CommandEmpty>
+                          <CommandGroup>
+                            {(teamMembers ?? [])
+                              .filter(tm => !shoot.team?.some(t => t.teamMemberId === tm.id))
+                              .map(tm => (
+                                <CommandItem
+                                  key={tm.id}
+                                  value={tm.name}
+                                  onSelect={() => {
+                                    setTeamMemberId(tm.id.toString());
+                                    if (tm.primaryRole) setTeamRole(tm.primaryRole);
+                                    setTeamMemberOpen(false);
+                                  }}
+                                >
+                                  <Check className={cn("mr-2 h-4 w-4 shrink-0", teamMemberId === tm.id.toString() ? "opacity-100" : "opacity-0")} />
+                                  <span className="flex-1 truncate">{tm.name}</span>
+                                  {tm.primaryRole && (
+                                    <span className="ml-2 text-xs text-muted-foreground shrink-0">{tm.primaryRole}</span>
+                                  )}
+                                </CommandItem>
+                              ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <Select value={teamRole} onValueChange={setTeamRole}>
                     <SelectTrigger className="w-36 h-9 text-sm">
                       <SelectValue placeholder="Função..." />
