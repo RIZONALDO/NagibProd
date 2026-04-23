@@ -79,6 +79,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   const companyName = appSettings?.company_name || "Nagibe Produção";
   const systemName = appSettings?.system_name || "Sistema de Gestão";
+  const logoUrl = appSettings?.logo_small_url || appSettings?.logo_url || null;
 
   useEffect(() => {
     try { localStorage.setItem("nagibe-sidebar-collapsed", String(isCollapsed)); } catch { /* ignore */ }
@@ -144,8 +145,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
           isCollapsed ? "flex justify-center px-1" : "px-2"
         )}>
           <div className={cn("flex items-center gap-3", isCollapsed && "justify-center")}>
-            <div className="bg-primary text-primary-foreground p-2 rounded-lg shrink-0">
-              <Video className="h-7 w-7" />
+            <div className="bg-primary text-primary-foreground p-2 rounded-lg shrink-0 flex items-center justify-center">
+              {logoUrl ? (
+                <img src={logoUrl} alt={companyName} className="h-7 w-7 object-contain" />
+              ) : (
+                <Video className="h-7 w-7" />
+              )}
             </div>
             {!isCollapsed && (
               <p className="font-bold text-xl tracking-tight leading-tight truncate">{companyName}</p>
@@ -257,8 +262,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
         {/* Mobile Header */}
         <header className="md:hidden flex items-center justify-between border-b bg-card px-4 h-14 shrink-0">
           <div className="flex items-center gap-2">
-            <div className="bg-primary text-primary-foreground p-1.5 rounded-md shrink-0">
-              <Video className="h-5 w-5" />
+            <div className="bg-primary text-primary-foreground p-1.5 rounded-md shrink-0 flex items-center justify-center">
+              {logoUrl ? (
+                <img src={logoUrl} alt={companyName} className="h-5 w-5 object-contain" />
+              ) : (
+                <Video className="h-5 w-5" />
+              )}
             </div>
             <div>
               <p className="font-bold tracking-tight text-base leading-tight">{companyName}</p>
@@ -279,8 +288,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <SheetContent side="right" className="w-[240px] sm:w-[280px]">
                 <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
                 <div className="flex items-center gap-2 mb-8 mt-2">
-                  <div className="bg-primary text-primary-foreground p-1.5 rounded-md shrink-0">
-                    <Video className="h-5 w-5" />
+                  <div className="bg-primary text-primary-foreground p-1.5 rounded-md shrink-0 flex items-center justify-center">
+                    {logoUrl ? (
+                      <img src={logoUrl} alt={companyName} className="h-5 w-5 object-contain" />
+                    ) : (
+                      <Video className="h-5 w-5" />
+                    )}
                   </div>
                   <div>
                     <p className="font-bold text-xl tracking-tight leading-tight">{companyName}</p>
