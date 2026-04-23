@@ -514,33 +514,6 @@ export default function ShootDetail() {
               <CardHeader>
                 <CardTitle>Informações Gerais</CardTitle>
               </CardHeader>
-              {(shoot as { scheduleChangedAt?: string | null }).scheduleChangedAt && (
-                <div className="mx-6 mb-2 flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30 px-4 py-3">
-                  <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Data ou horário alterado</p>
-                    <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
-                      Os dias ou horário desta pauta foram modificados. Verifique se a equipe e os equipamentos estão cientes da mudança.
-                    </p>
-                  </div>
-                  <button
-                    onClick={async () => {
-                      const base = import.meta.env.BASE_URL.replace(/\/$/, "");
-                      await fetch(`${base}/api/shoots/${id}`, {
-                        method: "PATCH",
-                        credentials: "include",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ scheduleChangedAt: null }),
-                      });
-                      queryClient.invalidateQueries({ queryKey: getGetShootQueryKey(id) });
-                    }}
-                    className="shrink-0 text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-200 ml-2"
-                    title="Dispensar aviso"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              )}
               <CardContent className="grid sm:grid-cols-2 gap-4">
                 <div className="flex items-start gap-3">
                   <Calendar className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
@@ -583,6 +556,34 @@ export default function ShootDetail() {
                 )}
               </CardContent>
             </Card>
+
+            {(shoot as { scheduleChangedAt?: string | null }).scheduleChangedAt && (
+              <div className="flex items-start gap-2.5 rounded-lg border border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30 px-3 py-2.5">
+                <AlertTriangle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">Data ou horário alterado</p>
+                  <p className="text-xs text-amber-700 dark:text-amber-400 leading-snug">
+                    Os dias ou horário desta pauta foram modificados. Verifique se a equipe e os equipamentos estão cientes da mudança.
+                  </p>
+                </div>
+                <button
+                  onClick={async () => {
+                    const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+                    await fetch(`${base}/api/shoots/${id}`, {
+                      method: "PATCH",
+                      credentials: "include",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ scheduleChangedAt: null }),
+                    });
+                    queryClient.invalidateQueries({ queryKey: getGetShootQueryKey(id) });
+                  }}
+                  className="shrink-0 text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-200"
+                  title="Dispensar aviso"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
