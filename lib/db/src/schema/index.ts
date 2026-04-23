@@ -6,3 +6,6 @@ export * from "./shoot_equipment";
 export * from "./checkouts";
 export * from "./returns";
 export * from "./activity_logs";
+export * from "./users";
+export * from "./app_settings";
+export * from "./whatsapp_templates";

@@ -1,0 +1,89 @@
+Adicionar um módulo de Configurações com acesso restrito a administradores.
+
+Esse módulo deve ter as seguintes seções:
+
+1. Usuários
+Permitir cadastrar usuários do sistema com:
+- nome completo
+- e-mail
+- login
+- senha
+- avatar opcional
+- perfil de acesso
+- status ativo/inativo
+- telefone opcional
+- observações
+- data de criação
+- último acesso
+
+Funcionalidades:
+- criar, editar, ativar, desativar, redefinir senha e excluir usuário
+- busca por nome, e-mail e perfil
+- login e e-mail devem ser únicos
+- usuários inativos não podem acessar o sistema
+
+2. Perfis de Acesso
+Criar perfis de acesso com pelo menos:
+- Administrador
+- Operador
+- Revisor
+- Visualizador
+
+Administrador:
+acesso total ao sistema, incluindo usuários, configurações, personalização, equipe, equipamentos, diárias, saída, devolução e histórico.
+
+Operador:
+pode gerenciar equipe, equipamentos, diárias, saídas e devoluções, mas não pode alterar usuários nem configurações gerais.
+
+Revisor:
+pode visualizar diárias, equipe e equipamentos, e revisar saídas e devoluções.
+
+Visualizador:
+somente leitura.
+
+3. Personalização
+Criar uma seção para personalizar o aplicativo com:
+- nome da empresa
+- nome do sistema
+- logo principal
+- logo reduzida opcional
+- cor principal
+- cor secundária
+- favicon opcional
+- texto de rodapé opcional
+
+As alterações devem refletir em:
+- tela de login
+- sidebar
+- header
+- título do navegador
+- rodapé
+
+4. Configurações Gerais
+Adicionar campos para:
+- formato de data
+- fuso horário
+- mensagem da tela de login
+- comportamento do botão de WhatsApp
+- idioma padrão
+- opção futura para modo escuro
+
+5. Modelos de WhatsApp
+Criar uma área para editar os modelos de texto usados nos espelhos:
+- espelho da pauta
+- espelho dos equipamentos
+- espelho completo
+
+Permitir placeholders dinâmicos, como:
+{data}, {horario}, {local}, {resumo}, {produtor}, {equipe}, {equipamentos}, {entregue_por}, {revisado_por}
+
+Permitir visualizar prévia e restaurar modelos padrão.
+
+6. Segurança e regras
+- somente administradores acessam Configurações
+- o sistema deve sempre manter pelo menos um administrador ativo
+- não permitir excluir o último administrador
+- registrar no histórico todas as alterações sensíveis:
+  criação de usuário, mudança de perfil, redefinição de senha, troca de logo, alteração do nome da empresa e edição dos modelos de WhatsApp
+
+Também criar uma tela de login conectada a esse módulo, usando a logo e o nome da empresa definidos em Personalização.

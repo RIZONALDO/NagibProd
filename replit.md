@@ -36,6 +36,21 @@ Full-stack operational management system for Nagibe Produção, a video/photogra
 6. **Devolução de Equipamentos** — Equipment return with damage tracking
 7. **WhatsApp Mirror** — Generate formatted text to share via WhatsApp
 8. **Histórico** — Activity log with filters
+9. **Configurações** (admin only):
+   - **Usuários** — CRUD with profile, status, reset password
+   - **Perfis de Acesso** — Administrador, Operador, Revisor, Visualizador
+   - **Personalização** — Company name, logo, colors, footer
+   - **Configurações Gerais** — Date format, timezone, login message, WhatsApp button behavior
+   - **Modelos de WhatsApp** — Edit templates with placeholders + live preview
+
+## Authentication
+
+- Session-based auth using express-session + connect-pg-simple
+- Sessions stored in PostgreSQL `session` table
+- Default admin: login=`admin`, password=`admin123` (change in Configurações > Usuários)
+- Passwords hashed with bcrypt
+- Roles: administrador (full access), operador (manage all except settings), revisor (read + review), visualizador (read-only)
+- All sensitive operations logged to activity_logs
 
 ## Customization
 
