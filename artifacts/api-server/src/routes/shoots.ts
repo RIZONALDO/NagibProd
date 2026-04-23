@@ -166,6 +166,8 @@ router.get("/shoots/:id", async (req, res): Promise<void> => {
     quantity: r.shoot_equipment.quantity,
     notes: r.shoot_equipment.notes,
     conditionOut: r.shoot_equipment.conditionOut,
+    isLinkedItem: r.shoot_equipment.isLinkedItem,
+    parentShootEquipmentId: r.shoot_equipment.parentShootEquipmentId,
     equipment: r.equipment ? serializeEquipment(r.equipment) : null,
   }));
 
@@ -458,6 +460,8 @@ router.get("/shoots/:id/equipment", async (req, res): Promise<void> => {
     quantity: r.shoot_equipment.quantity,
     notes: r.shoot_equipment.notes,
     conditionOut: r.shoot_equipment.conditionOut,
+    isLinkedItem: r.shoot_equipment.isLinkedItem,
+    parentShootEquipmentId: r.shoot_equipment.parentShootEquipmentId,
     equipment: r.equipment ? serializeEquipment(r.equipment) : null,
   })));
 });
@@ -485,17 +489,23 @@ router.post("/shoots/:id/equipment", async (req, res): Promise<void> => {
     return;
   }
 
+  const body = req.body as Record<string, unknown>;
+  const isLinkedItem = Boolean(body.isLinkedItem);
+  const parentShootEquipmentId = body.parentShootEquipmentId ? Number(body.parentShootEquipmentId) : null;
+
   const [row] = await db.insert(shootEquipmentTable).values({
     shootId: params.data.id,
     equipmentId: parsed.data.equipmentId,
     quantity: parsed.data.quantity ?? 1,
     notes: parsed.data.notes ?? null,
     conditionOut: parsed.data.conditionOut ?? null,
+    isLinkedItem,
+    parentShootEquipmentId,
   }).returning();
 
   await db.insert(activityLogsTable).values({
     type: "equipment_added_to_shoot",
-    description: `${equip?.name ?? "Equipamento"} adicionado à diária`,
+    description: `${equip?.name ?? "Equipamento"} adicionado à diária${isLinkedItem ? " (item vinculado)" : ""}`,
     shootId: params.data.id,
     equipmentId: row.equipmentId,
   });
@@ -507,6 +517,8 @@ router.post("/shoots/:id/equipment", async (req, res): Promise<void> => {
     quantity: row.quantity,
     notes: row.notes,
     conditionOut: row.conditionOut,
+    isLinkedItem: row.isLinkedItem,
+    parentShootEquipmentId: row.parentShootEquipmentId,
     equipment: equip ? serializeEquipment(equip) : null,
   });
 });

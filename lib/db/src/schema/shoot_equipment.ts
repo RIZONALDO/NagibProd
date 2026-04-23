@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { shootsTable } from "./shoots";
@@ -11,6 +11,8 @@ export const shootEquipmentTable = pgTable("shoot_equipment", {
   quantity: integer("quantity").notNull().default(1),
   notes: text("notes"),
   conditionOut: text("condition_out"),
+  isLinkedItem: boolean("is_linked_item").notNull().default(false),
+  parentShootEquipmentId: integer("parent_shoot_equipment_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

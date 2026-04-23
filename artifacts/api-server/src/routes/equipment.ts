@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { eq, ilike, and } from "drizzle-orm";
-import { db, equipmentTable, activityLogsTable } from "@workspace/db";
+import { db, equipmentTable, activityLogsTable, equipmentLinksTable } from "@workspace/db";
 import {
   ListEquipmentQueryParams,
   CreateEquipmentBody,
@@ -9,6 +9,11 @@ import {
   UpdateEquipmentBody,
   DeleteEquipmentParams,
 } from "@workspace/api-zod";
+
+function parseId(val: unknown): number | null {
+  const n = Number(val);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
 
 const router = Router();
 
@@ -160,6 +165,98 @@ router.delete("/equipment/:id", async (req, res): Promise<void> => {
     res.status(404).json({ error: "Equipment not found" });
     return;
   }
+
+  res.sendStatus(204);
+});
+
+// ─── Equipment Links ─────────────────────────────────────────────────────────
+
+router.get("/equipment/:id/links", async (req, res): Promise<void> => {
+  const equipId = parseId(req.params.id);
+  if (!equipId) { res.status(400).json({ error: "ID inválido" }); return; }
+
+  const links = await db
+    .select({
+      id: equipmentLinksTable.id,
+      equipmentId: equipmentLinksTable.equipmentId,
+      linkedEquipmentId: equipmentLinksTable.linkedEquipmentId,
+      defaultQuantity: equipmentLinksTable.defaultQuantity,
+      required: equipmentLinksTable.required,
+      notes: equipmentLinksTable.notes,
+      createdAt: equipmentLinksTable.createdAt,
+      linkedEquipment: {
+        id: equipmentTable.id,
+        name: equipmentTable.name,
+        category: equipmentTable.category,
+        availableQuantity: equipmentTable.availableQuantity,
+        totalQuantity: equipmentTable.totalQuantity,
+        status: equipmentTable.status,
+        internalCode: equipmentTable.internalCode,
+      },
+    })
+    .from(equipmentLinksTable)
+    .innerJoin(equipmentTable, eq(equipmentLinksTable.linkedEquipmentId, equipmentTable.id))
+    .where(eq(equipmentLinksTable.equipmentId, equipId));
+
+  res.json(links.map(l => ({ ...l, createdAt: l.createdAt.toISOString() })));
+});
+
+router.post("/equipment/:id/links", async (req, res): Promise<void> => {
+  const equipId = parseId(req.params.id);
+  if (!equipId) { res.status(400).json({ error: "ID inválido" }); return; }
+
+  const { linkedEquipmentId, defaultQuantity, required, notes } = req.body as Record<string, unknown>;
+  const linkedId = parseId(linkedEquipmentId);
+  if (!linkedId) { res.status(400).json({ error: "linkedEquipmentId inválido" }); return; }
+  if (linkedId === equipId) { res.status(400).json({ error: "Um equipamento não pode ser vinculado a si mesmo" }); return; }
+
+  const qty = Number(defaultQuantity) >= 1 ? Number(defaultQuantity) : 1;
+  const isRequired = Boolean(required);
+
+  const [link] = await db
+    .insert(equipmentLinksTable)
+    .values({
+      equipmentId: equipId,
+      linkedEquipmentId: linkedId,
+      defaultQuantity: qty,
+      required: isRequired,
+      notes: typeof notes === "string" && notes.trim() ? notes.trim() : null,
+    })
+    .returning();
+
+  res.status(201).json({ ...link, createdAt: link.createdAt.toISOString(), updatedAt: link.updatedAt.toISOString() });
+});
+
+router.patch("/equipment/:id/links/:linkId", async (req, res): Promise<void> => {
+  const equipId = parseId(req.params.id);
+  const linkId = parseId(req.params.linkId);
+  if (!equipId || !linkId) { res.status(400).json({ error: "ID inválido" }); return; }
+
+  const body = req.body as Record<string, unknown>;
+  const updateData: Record<string, unknown> = {};
+  if (body.defaultQuantity !== undefined) updateData.defaultQuantity = Math.max(1, Number(body.defaultQuantity));
+  if (body.required !== undefined) updateData.required = Boolean(body.required);
+  if (body.notes !== undefined) updateData.notes = typeof body.notes === "string" && body.notes.trim() ? body.notes.trim() : null;
+
+  const [link] = await db
+    .update(equipmentLinksTable)
+    .set(updateData)
+    .where(and(eq(equipmentLinksTable.id, linkId), eq(equipmentLinksTable.equipmentId, equipId)))
+    .returning();
+
+  if (!link) { res.status(404).json({ error: "Vínculo não encontrado" }); return; }
+
+  res.json({ ...link, createdAt: link.createdAt.toISOString(), updatedAt: link.updatedAt.toISOString() });
+});
+
+router.delete("/equipment/:id/links/:linkId", async (req, res): Promise<void> => {
+  const equipId = parseId(req.params.id);
+  const linkId = parseId(req.params.linkId);
+  if (!equipId || !linkId) { res.status(400).json({ error: "ID inválido" }); return; }
+
+  await db
+    .delete(equipmentLinksTable)
+    .where(and(eq(equipmentLinksTable.id, linkId), eq(equipmentLinksTable.equipmentId, equipId)));
 
   res.sendStatus(204);
 });

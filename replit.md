@@ -30,7 +30,7 @@ Full-stack operational management system for Nagibe Produção, a video/photogra
 
 1. **Dashboard** — Stats, today's shoots, equipment alerts, recent activity
 2. **Equipe** — Team member management with roles, photo, status
-3. **Equipamentos** — Equipment catalog with categories, status, availability
+3. **Equipamentos** — Equipment catalog with categories, status, availability; each item can define **Itens Vinculados** (linked items: required or optional accessories that auto-suggest when the parent is added to a shoot)
 4. **Diárias** — Shoot management with team/equipment assignment
 5. **Saída de Equipamentos** — Equipment checkout with checklist
 6. **Devolução de Equipamentos** — Equipment return with damage tracking

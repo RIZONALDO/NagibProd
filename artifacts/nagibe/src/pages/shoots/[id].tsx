@@ -1,5 +1,9 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Shell } from "@/components/layout/Shell";
+import { getEquipmentLinks, type EquipmentLink } from "@/lib/equipment-links-api";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { Link2, AlertTriangle } from "lucide-react";
 import { 
   useGetShoot, 
   useUpdateShoot,
@@ -59,6 +63,15 @@ export default function ShootDetail() {
   
   const [equipmentId, setEquipmentId] = useState<string>("");
   const [equipQuantity, setEquipQuantity] = useState<string>("1");
+
+  // Linked items suggestion state
+  interface OptionalLinkItem { link: EquipmentLink; quantity: number; selected: boolean }
+  const [linkedSuggestion, setLinkedSuggestion] = useState<{
+    parentItemId: number;
+    parentName: string;
+    items: OptionalLinkItem[];
+  } | null>(null);
+  const [isAddingLinked, setIsAddingLinked] = useState(false);
 
   const { data: shoot, isLoading } = useGetShoot(id, { query: { enabled: !!id } });
   
@@ -135,19 +148,113 @@ export default function ShootDetail() {
       return;
     }
     
+    const eqId = parseInt(equipmentId);
+    const eqName = equipments?.find(e => e.id === eqId)?.name ?? "Equipamento";
+
     addEquipMutation.mutate({ 
       id, 
-      data: { equipmentId: parseInt(equipmentId), quantity: parseInt(equipQuantity) } 
+      data: { equipmentId: eqId, quantity: parseInt(equipQuantity) } 
     }, {
-      onSuccess: () => {
-        toast({ title: "Equipamento adicionado" });
+      onSuccess: async (parentRow) => {
         queryClient.invalidateQueries({ queryKey: getGetShootQueryKey(id) });
         setIsEquipDialogOpen(false);
         setEquipmentId("");
         setEquipQuantity("1");
+
+        // Fetch and process linked items
+        try {
+          const links = await getEquipmentLinks(eqId);
+          if (links.length === 0) {
+            toast({ title: "Equipamento adicionado" });
+            return;
+          }
+
+          const currentEquipIds = new Set(
+            shoot?.equipmentItems?.map(i => i.equipmentId) ?? []
+          );
+
+          const requiredLinks = links.filter(l => l.required && !currentEquipIds.has(l.linkedEquipmentId));
+          const optionalLinks = links.filter(l => !l.required && !currentEquipIds.has(l.linkedEquipmentId));
+
+          // Auto-add required linked items
+          for (const link of requiredLinks) {
+            await fetch(
+              `${import.meta.env.BASE_URL.replace(/\/$/, "")}/api/shoots/${id}/equipment`,
+              {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  equipmentId: link.linkedEquipmentId,
+                  quantity: link.defaultQuantity,
+                  isLinkedItem: true,
+                  parentShootEquipmentId: (parentRow as { id: number }).id,
+                }),
+              }
+            );
+          }
+
+          if (requiredLinks.length > 0 || optionalLinks.length > 0) {
+            queryClient.invalidateQueries({ queryKey: getGetShootQueryKey(id) });
+          }
+
+          if (requiredLinks.length > 0) {
+            toast({
+              title: `${requiredLinks.length} item(s) obrigatório(s) adicionado(s) automaticamente`,
+              description: requiredLinks.map(l => l.linkedEquipment.name).join(", "),
+            });
+          } else {
+            toast({ title: "Equipamento adicionado" });
+          }
+
+          // Show suggestion dialog for optional linked items
+          if (optionalLinks.length > 0) {
+            setLinkedSuggestion({
+              parentItemId: (parentRow as { id: number }).id,
+              parentName: eqName,
+              items: optionalLinks.map(link => ({
+                link,
+                quantity: link.defaultQuantity,
+                selected: true,
+              })),
+            });
+          }
+        } catch {
+          toast({ title: "Equipamento adicionado" });
+        }
       }
     });
   };
+
+  const handleConfirmOptionalLinked = useCallback(async () => {
+    if (!linkedSuggestion) return;
+    setIsAddingLinked(true);
+
+    const toAdd = linkedSuggestion.items.filter(i => i.selected);
+    for (const item of toAdd) {
+      try {
+        await fetch(
+          `${import.meta.env.BASE_URL.replace(/\/$/, "")}/api/shoots/${id}/equipment`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              equipmentId: item.link.linkedEquipmentId,
+              quantity: item.quantity,
+              isLinkedItem: true,
+              parentShootEquipmentId: linkedSuggestion.parentItemId,
+            }),
+          }
+        );
+      } catch { /* silently continue */ }
+    }
+
+    queryClient.invalidateQueries({ queryKey: getGetShootQueryKey(id) });
+    setIsAddingLinked(false);
+    setLinkedSuggestion(null);
+    if (toAdd.length > 0) toast({ title: `${toAdd.length} item(s) opcional(is) adicionado(s)` });
+  }, [linkedSuggestion, id, queryClient]);
 
   const handleRemoveEquipment = (equipId: number) => {
     removeEquipMutation.mutate({ id, equipmentId: equipId }, {
@@ -471,24 +578,66 @@ export default function ShootDetail() {
                     <p className="text-sm">Nenhum equipamento solicitado</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    {shoot.equipmentItems.map((item) => (
-                      <div key={item.id} className="flex items-center justify-between p-3 border rounded-md">
-                        <div className="flex flex-col">
-                          <p className="font-medium text-sm">{item.equipment.name}</p>
-                          <p className="text-xs text-muted-foreground">Quantidade: {item.quantity}</p>
+                  <div className="space-y-2">
+                    {(() => {
+                      const items = shoot.equipmentItems ?? [];
+                      const parentItems = items.filter(i => !i.isLinkedItem);
+                      const linkedByParent = new Map<number, typeof items>();
+                      items.filter(i => i.isLinkedItem && i.parentShootEquipmentId).forEach(i => {
+                        const arr = linkedByParent.get(i.parentShootEquipmentId!) ?? [];
+                        arr.push(i);
+                        linkedByParent.set(i.parentShootEquipmentId!, arr);
+                      });
+                      // Orphaned linked items (parent removed)
+                      const orphaned = items.filter(i => i.isLinkedItem && !i.parentShootEquipmentId);
+                      const allParents = [...parentItems, ...orphaned];
+
+                      return allParents.map(item => (
+                        <div key={item.id}>
+                          {/* Parent row */}
+                          <div className="flex items-center justify-between p-3 border rounded-xl bg-card">
+                            <div className="flex flex-col">
+                              <p className="font-medium text-sm">{item.equipment?.name}</p>
+                              <p className="text-xs text-muted-foreground">Quantidade: {item.quantity}</p>
+                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="text-destructive h-8 w-8"
+                              onClick={() => handleRemoveEquipment(item.equipmentId)}
+                              disabled={removeEquipMutation.isPending}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+
+                          {/* Linked children */}
+                          {(linkedByParent.get(item.id) ?? []).map(child => (
+                            <div
+                              key={child.id}
+                              className="flex items-center justify-between ml-6 mt-1 p-2.5 border border-dashed rounded-xl bg-muted/40"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Link2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                <div>
+                                  <p className="text-sm text-muted-foreground">{child.equipment?.name}</p>
+                                  <p className="text-xs text-muted-foreground/70">{child.quantity}x · vinculado</p>
+                                </div>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-destructive h-7 w-7"
+                                onClick={() => handleRemoveEquipment(child.equipmentId)}
+                                disabled={removeEquipMutation.isPending}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          ))}
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="text-destructive h-8 w-8"
-                          onClick={() => handleRemoveEquipment(item.equipmentId)}
-                          disabled={removeEquipMutation.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
+                      ));
+                    })()}
                   </div>
                 )}
                 
@@ -587,6 +736,91 @@ export default function ShootDetail() {
           </div>
         </div>
       </div>
+
+      {/* Optional linked items suggestion dialog */}
+      <Dialog open={!!linkedSuggestion} onOpenChange={(open) => { if (!open) setLinkedSuggestion(null); }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Link2 className="h-5 w-5 text-primary" />
+              Itens sugeridos para {linkedSuggestion?.parentName}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="py-2 space-y-1">
+            <p className="text-sm text-muted-foreground mb-3">
+              Os itens abaixo costumam acompanhar este equipamento. Selecione os que deseja incluir:
+            </p>
+
+            {linkedSuggestion?.items.map((optItem, idx) => {
+              const avail = optItem.link.linkedEquipment.availableQuantity;
+              const unavailable = avail === 0;
+              return (
+                <div
+                  key={optItem.link.id}
+                  className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${
+                    optItem.selected ? "border-primary/40 bg-primary/5" : "border-border bg-muted/20"
+                  } ${unavailable ? "opacity-60" : ""}`}
+                >
+                  <Checkbox
+                    id={`opt-${idx}`}
+                    checked={optItem.selected && !unavailable}
+                    disabled={unavailable}
+                    onCheckedChange={(checked) =>
+                      setLinkedSuggestion(prev => prev ? {
+                        ...prev,
+                        items: prev.items.map((it, i) => i === idx ? { ...it, selected: Boolean(checked) } : it)
+                      } : prev)
+                    }
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{optItem.link.linkedEquipment.name}</p>
+                    <p className={`text-xs ${unavailable ? "text-red-500" : "text-muted-foreground"}`}>
+                      {unavailable
+                        ? "Indisponível no estoque"
+                        : `${avail} disponível(is) no estoque`}
+                    </p>
+                    {optItem.link.notes && (
+                      <p className="text-xs text-muted-foreground/70 italic mt-0.5">{optItem.link.notes}</p>
+                    )}
+                  </div>
+                  <div className="shrink-0">
+                    <Input
+                      type="number"
+                      min="1"
+                      max={avail > 0 ? avail : 99}
+                      disabled={unavailable || !optItem.selected}
+                      value={optItem.quantity}
+                      onChange={(e) =>
+                        setLinkedSuggestion(prev => prev ? {
+                          ...prev,
+                          items: prev.items.map((it, i) =>
+                            i === idx ? { ...it, quantity: Math.max(1, parseInt(e.target.value) || 1) } : it
+                          )
+                        } : prev)
+                      }
+                      className="w-16 h-8 text-center text-sm"
+                    />
+                  </div>
+                  {unavailable && <AlertTriangle className="h-4 w-4 text-red-500 shrink-0" />}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setLinkedSuggestion(null)}>
+              Pular
+            </Button>
+            <Button
+              onClick={handleConfirmOptionalLinked}
+              disabled={isAddingLinked || !linkedSuggestion?.items.some(i => i.selected)}
+            >
+              {isAddingLinked ? "Adicionando..." : "Adicionar selecionados"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Shell>
   );
 }

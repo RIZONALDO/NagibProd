@@ -1,5 +1,6 @@
 import { Shell } from "@/components/layout/Shell";
 import { EquipmentForm, EquipmentFormValues } from "./form";
+import { LinkedItemsSection } from "./LinkedItemsSection";
 import { useGetEquipment, useUpdateEquipment, useDeleteEquipment, getGetEquipmentQueryKey, getListEquipmentQueryKey } from "@workspace/api-client-react";
 import { useLocation, useParams } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -121,6 +122,8 @@ export default function EditEquipment() {
             <EquipmentForm defaultValues={item} onSubmit={handleSubmit} isSubmitting={updateMutation.isPending} />
           </CardContent>
         </Card>
+
+        <LinkedItemsSection equipmentId={id} equipmentName={item.name} />
       </div>
     </Shell>
   );

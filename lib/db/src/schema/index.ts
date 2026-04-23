@@ -9,3 +9,4 @@ export * from "./activity_logs";
 export * from "./users";
 export * from "./app_settings";
 export * from "./whatsapp_templates";
+export * from "./equipment_links";
