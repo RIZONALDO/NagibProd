@@ -10,6 +10,9 @@ import {
   Menu,
   LogOut,
   ChevronDown,
+  Sun,
+  Moon,
+  Monitor,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -20,9 +23,11 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -33,10 +38,31 @@ const NAV_ITEMS = [
   { href: "/activity", label: "Histórico", icon: ActivitySquare },
 ];
 
+function ThemeToggleButton({ className }: { className?: string }) {
+  const { resolvedTheme, toggleTheme } = useTheme();
+  return (
+    <button
+      onClick={toggleTheme}
+      title={resolvedTheme === "dark" ? "Mudar para modo claro" : "Mudar para modo escuro"}
+      className={cn(
+        "flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors",
+        className,
+      )}
+    >
+      {resolvedTheme === "dark" ? (
+        <Sun className="h-4 w-4" />
+      ) : (
+        <Moon className="h-4 w-4" />
+      )}
+    </button>
+  );
+}
+
 export function Shell({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, isAdmin, logout } = useAuth();
+  const { theme, setTheme, resolvedTheme } = useTheme();
 
   const NavLinks = ({ onClick }: { onClick?: () => void }) => (
     <nav className="flex flex-col gap-2">
@@ -85,7 +111,45 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <NavLinks />
 
         {user && (
-          <div className="mt-auto pt-4 border-t">
+          <div className="mt-auto pt-4 border-t space-y-1">
+            {/* Theme toggle row */}
+            <div className="flex items-center justify-between px-3 py-1.5 rounded-md text-xs text-muted-foreground">
+              <span>Aparência</span>
+              <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5">
+                <button
+                  onClick={() => setTheme("light")}
+                  title="Modo claro"
+                  className={cn(
+                    "p-1.5 rounded transition-colors",
+                    theme === "light" ? "bg-card text-foreground shadow-sm" : "hover:text-foreground",
+                  )}
+                >
+                  <Sun className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  onClick={() => setTheme("system")}
+                  title="Seguir sistema"
+                  className={cn(
+                    "p-1.5 rounded transition-colors",
+                    theme === "system" ? "bg-card text-foreground shadow-sm" : "hover:text-foreground",
+                  )}
+                >
+                  <Monitor className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  onClick={() => setTheme("dark")}
+                  title="Modo escuro"
+                  className={cn(
+                    "p-1.5 rounded transition-colors",
+                    theme === "dark" ? "bg-card text-foreground shadow-sm" : "hover:text-foreground",
+                  )}
+                >
+                  <Moon className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* User menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors">
@@ -120,44 +184,73 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </div>
             <span className="font-bold tracking-tight">Nagibe</span>
           </div>
-          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="-mr-2">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[240px] sm:w-[280px]">
-              <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
-              <div className="flex items-center gap-2 mb-8 mt-2">
-                <div className="bg-primary text-primary-foreground p-1.5 rounded-md">
-                  <Video className="h-5 w-5" />
-                </div>
-                <span className="font-bold text-lg tracking-tight">Nagibe Produção</span>
-              </div>
-              <NavLinks onClick={() => setIsMobileMenuOpen(false)} />
-              {user && (
-                <div className="mt-6 pt-4 border-t">
-                  <div className="flex items-center gap-2 px-3 mb-3">
-                    <div className="h-7 w-7 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-xs">
-                      {user.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium">{user.name}</p>
-                      <p className="text-xs text-muted-foreground capitalize">{user.profile}</p>
-                    </div>
+          <div className="flex items-center gap-1">
+            <ThemeToggleButton />
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="-mr-2">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Toggle menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[240px] sm:w-[280px]">
+                <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
+                <div className="flex items-center gap-2 mb-8 mt-2">
+                  <div className="bg-primary text-primary-foreground p-1.5 rounded-md">
+                    <Video className="h-5 w-5" />
                   </div>
-                  <button
-                    onClick={() => { logout(); setIsMobileMenuOpen(false); }}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-destructive hover:bg-destructive/10 transition-colors"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Sair
-                  </button>
+                  <span className="font-bold text-lg tracking-tight">Nagibe Produção</span>
                 </div>
-              )}
-            </SheetContent>
-          </Sheet>
+                <NavLinks onClick={() => setIsMobileMenuOpen(false)} />
+                {user && (
+                  <div className="mt-6 pt-4 border-t space-y-1">
+                    {/* Theme selector mobile */}
+                    <div className="px-3 py-2">
+                      <p className="text-xs text-muted-foreground mb-2">Aparência</p>
+                      <div className="flex gap-1">
+                        {([
+                          { value: "light", label: "Claro", icon: Sun },
+                          { value: "system", label: "Auto", icon: Monitor },
+                          { value: "dark", label: "Escuro", icon: Moon },
+                        ] as const).map(({ value, label, icon: Icon }) => (
+                          <button
+                            key={value}
+                            onClick={() => setTheme(value)}
+                            className={cn(
+                              "flex-1 flex flex-col items-center gap-1 py-2 rounded-md text-xs border transition-colors",
+                              theme === value
+                                ? "bg-primary/10 border-primary/30 text-primary"
+                                : "border-border text-muted-foreground hover:bg-muted",
+                            )}
+                          >
+                            <Icon className="h-4 w-4" />
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 px-3 mt-1">
+                      <div className="h-7 w-7 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-xs">
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium">{user.name}</p>
+                        <p className="text-xs text-muted-foreground capitalize">{user.profile}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => { logout(); setIsMobileMenuOpen(false); }}
+                      className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Sair
+                    </button>
+                  </div>
+                )}
+              </SheetContent>
+            </Sheet>
+          </div>
         </header>
 
         {/* Content */}
