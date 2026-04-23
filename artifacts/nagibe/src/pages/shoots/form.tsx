@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { SHOOT_PRIORITY_LABELS, SHOOT_STATUS_LABELS } from "@/lib/constants";
 
 const shootSchema = z.object({
+  title: z.string().min(2, "Título é obrigatório"),
   date: z.string().min(1, "Data de início é obrigatória"),
   endDate: z.string().optional().nullable(),
   time: z.string().optional().nullable(),
@@ -41,6 +42,7 @@ export function ShootForm({ defaultValues, onSubmit, isSubmitting }: ShootFormPr
   const form = useForm<ShootFormValues>({
     resolver: zodResolver(shootSchema),
     defaultValues: {
+      title: defaultValues?.title || "",
       date: formattedDate,
       endDate: formattedEndDate || "",
       time: defaultValues?.time || "",
@@ -57,6 +59,26 @@ export function ShootForm({ defaultValues, onSubmit, isSubmitting }: ShootFormPr
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* Título — campo principal, full width */}
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-base font-semibold">Título da Pauta</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="Ex: Gravação Comercial Banco XYZ – São Paulo"
+                  className="text-base"
+                  autoFocus
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <div className="grid gap-6 md:grid-cols-2">
           {/* Período */}
           <FormField
@@ -120,7 +142,7 @@ export function ShootForm({ defaultValues, onSubmit, isSubmitting }: ShootFormPr
             name="clientProject"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Cliente / Projeto</FormLabel>
+                <FormLabel>Cliente / Projeto <span className="text-muted-foreground font-normal">(opcional)</span></FormLabel>
                 <FormControl>
                   <Input placeholder="Ex: Comercial Banco XYZ" {...field} value={field.value || ""} />
                 </FormControl>

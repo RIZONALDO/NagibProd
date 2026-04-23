@@ -97,9 +97,9 @@ export default function ShootsList() {
                       </div>
                     </div>
                     <CardTitle className="text-lg font-bold group-hover:text-primary transition-colors line-clamp-2">
-                      {shoot.location}
+                      {(shoot as { title?: string | null }).title || shoot.clientProject || shoot.location}
                     </CardTitle>
-                    {shoot.clientProject && (
+                    {(shoot as { title?: string | null }).title && shoot.clientProject && (
                       <p className="text-sm font-medium text-muted-foreground">
                         {shoot.clientProject}
                       </p>

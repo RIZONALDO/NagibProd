@@ -99,6 +99,7 @@ router.post("/shoots", async (req, res): Promise<void> => {
   }
 
   const [shoot] = await db.insert(shootsTable).values({
+    title: (req.body.title as string | undefined) ?? null,
     date: parsed.data.date,
     endDate: (req.body.endDate && typeof req.body.endDate === "string") ? req.body.endDate : null,
     time: parsed.data.time ?? null,
@@ -267,6 +268,7 @@ router.patch("/shoots/:id", async (req, res): Promise<void> => {
   }
 
   const updateData: Record<string, unknown> = {};
+  if (req.body.title !== undefined) updateData.title = req.body.title || null;
   if (parsed.data.date !== undefined) updateData.date = parsed.data.date;
   if (parsed.data.time !== undefined) updateData.time = parsed.data.time;
   if (parsed.data.location !== undefined) updateData.location = parsed.data.location;

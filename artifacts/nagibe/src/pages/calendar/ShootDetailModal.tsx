@@ -69,7 +69,7 @@ export default function ShootDetailModal({ shoot, onClose }: Props) {
         <div className="px-6 pt-4 pb-0">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold leading-snug">
-              {shoot.whatsappSummary || shoot.location}
+              {(shoot as { title?: string | null }).title || shoot.whatsappSummary || shoot.location}
             </DialogTitle>
           </DialogHeader>
 

@@ -408,7 +408,12 @@ export default function ShootDetail() {
                   <ShootOverdueBadge />
                 )}
               </div>
-              <h1 className="text-3xl font-bold tracking-tight">{shoot.clientProject || shoot.location}</h1>
+              <h1 className="text-3xl font-bold tracking-tight">
+                {(shoot as { title?: string | null }).title || shoot.clientProject || shoot.location}
+              </h1>
+              {(shoot as { title?: string | null }).title && (
+                <p className="text-sm text-muted-foreground mt-0.5">{shoot.clientProject || shoot.location}</p>
+              )}
             </div>
           </div>
           

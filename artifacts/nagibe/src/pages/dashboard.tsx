@@ -150,12 +150,16 @@ export default function Dashboard() {
                       <div className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent transition-colors">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium group-hover:underline">{shoot.location}</span>
+                            <span className="font-medium group-hover:underline">
+                              {(shoot as { title?: string | null }).title || shoot.clientProject || shoot.location}
+                            </span>
                             <ShootPriorityBadge priority={shoot.priority} className="text-[10px] px-1.5 py-0 h-4" />
                           </div>
                           <div className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
                             <span>{shoot.time || "Horário não definido"}</span>
-                            {shoot.clientProject && (
+                            <span>•</span>
+                            <span>{shoot.location}</span>
+                            {shoot.clientProject && !(shoot as { title?: string | null }).title && (
                               <>
                                 <span>•</span>
                                 <span>{shoot.clientProject}</span>

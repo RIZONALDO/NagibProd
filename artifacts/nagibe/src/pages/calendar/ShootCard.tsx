@@ -25,7 +25,7 @@ const PRIORITY_LABEL_COLOR: Record<string, string> = {
 
 export default function ShootCard({ shoot, onClick, compact = false }: Props) {
   const card = STATUS_CARD[shoot.status] ?? STATUS_CARD.planned;
-  const title = shoot.whatsappSummary || shoot.location;
+  const title = (shoot as { title?: string | null }).title || shoot.whatsappSummary || shoot.location;
 
   /* ── Compact pill (Month view) ─────────────────────────── */
   if (compact) {
