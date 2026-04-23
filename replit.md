@@ -1,8 +1,8 @@
-# Workspace
+# Nagibe Produção - Sistema de Gestão Operacional
 
 ## Overview
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+Full-stack operational management system for Nagibe Produção, a video/photography production company. Manages team members, equipment, daily shoots, equipment checkout/return, and WhatsApp mirror generation.
 
 ## Stack
 
@@ -10,9 +10,11 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Node.js version**: 24
 - **Package manager**: pnpm
 - **TypeScript version**: 5.9
-- **API framework**: Express 5
-- **Database**: PostgreSQL + Drizzle ORM
-- **Validation**: Zod (`zod/v4`), `drizzle-zod`
+- **Frontend**: React + Vite (artifacts/nagibe)
+- **API framework**: Express 5 (artifacts/api-server)
+- **Database**: PostgreSQL + Drizzle ORM (lib/db)
+- **Validation**: Zod (zod/v4), drizzle-zod
+- **UI**: Tailwind CSS + Radix UI + lucide-react
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
 
@@ -24,4 +26,58 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - `pnpm --filter @workspace/api-server run dev` — run API server locally
 
-See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
+## Application Modules
+
+1. **Dashboard** — Stats, today's shoots, equipment alerts, recent activity
+2. **Equipe** — Team member management with roles, photo, status
+3. **Equipamentos** — Equipment catalog with categories, status, availability
+4. **Diárias** — Shoot management with team/equipment assignment
+5. **Saída de Equipamentos** — Equipment checkout with checklist
+6. **Devolução de Equipamentos** — Equipment return with damage tracking
+7. **WhatsApp Mirror** — Generate formatted text to share via WhatsApp
+8. **Histórico** — Activity log with filters
+
+## Customization
+
+### Identity (Logo, Name, Colors)
+- **App name**: Change `"Nagibe Produção"` in `artifacts/nagibe/src/components/Shell.tsx`
+- **Colors**: Modify `artifacts/nagibe/src/index.css` (amber/gold primary, slate sidebar)
+- **Logo**: Replace the icon in the Shell sidebar
+
+### WhatsApp Text Templates
+- Templates are in `artifacts/nagibe/src/pages/ShootDetail.tsx`
+- Look for the `generatePautaText`, `generateEquipmentText`, and `generateFullText` functions
+
+### Default Roles
+- Roles list is in `artifacts/nagibe/src/pages/TeamMemberForm.tsx`
+- Look for the `TEAM_ROLES` constant
+
+### Equipment Categories
+- Categories with icons are in `artifacts/nagibe/src/components/EquipmentCategoryIcon.tsx`
+
+## Database Schema (lib/db/src/schema/)
+
+- `team_members.ts` — Team member records
+- `equipment.ts` — Equipment catalog
+- `shoots.ts` — Shoot/daily records
+- `shoot_team.ts` — Team assignment to shoots
+- `shoot_equipment.ts` — Equipment assignment to shoots
+- `checkouts.ts` + `checkout_items.ts` — Equipment checkout records
+- `returns.ts` + `return_items.ts` — Equipment return records
+- `activity_logs.ts` — Audit log of all operations
+
+## API Routes (artifacts/api-server/src/routes/)
+
+- `dashboard.ts` — GET /dashboard/summary
+- `team.ts` — CRUD for /team and /team/:id
+- `equipment.ts` — CRUD for /equipment and /equipment/:id
+- `shoots.ts` — CRUD for /shoots, team/equipment management, checkout/return
+- `activity.ts` — GET /activity with filters
+
+## Business Rules
+
+- Equipment in `maintenance` status cannot be added to a shoot
+- Equipment in `pending_return` status shows highlighted in dashboard
+- Checkout marks equipment as `in_use`
+- Return marks equipment as `available`, `damaged`, or `pending_return` based on return data
+- Shoot status progresses: planned → team_defined → equipment_separated → checkout_done → in_progress → return_pending → closed

@@ -1,0 +1,592 @@
+import { useState } from "react";
+import { Shell } from "@/components/layout/Shell";
+import { 
+  useGetShoot, 
+  useUpdateShoot,
+  useDeleteShoot,
+  useAddShootTeamMember,
+  useRemoveShootTeamMember,
+  useAddShootEquipment,
+  useRemoveShootEquipment,
+  useListTeamMembers,
+  useListEquipment,
+  getGetShootQueryKey, 
+  getListShootsQueryKey 
+} from "@workspace/api-client-react";
+import { useLocation, useParams } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ArrowLeft, Trash2, Copy, Send, Edit, Plus, Users, Camera, Calendar, MapPin, Clock, Briefcase } from "lucide-react";
+import { Link } from "wouter";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { ShootStatusBadge, ShootPriorityBadge, EquipmentStatusBadge } from "@/components/ui/status-badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ShootForm, ShootFormValues } from "./form";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { TEAM_ROLES, EQUIPMENT_CATEGORIES } from "@/lib/constants";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+export default function ShootDetail() {
+  const params = useParams();
+  const id = parseInt(params.id || "0", 10);
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  const [isEditing, setIsEditing] = useState(false);
+  const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
+  const [isEquipDialogOpen, setIsEquipDialogOpen] = useState(false);
+
+  // Form states for modals
+  const [teamMemberId, setTeamMemberId] = useState<string>("");
+  const [teamRole, setTeamRole] = useState<string>("");
+  
+  const [equipmentId, setEquipmentId] = useState<string>("");
+  const [equipQuantity, setEquipQuantity] = useState<string>("1");
+
+  const { data: shoot, isLoading } = useGetShoot(id, { query: { enabled: !!id } });
+  
+  // Queries for selectors
+  const { data: teamMembers } = useListTeamMembers({ status: "active" }, { query: { enabled: isTeamDialogOpen } });
+  const { data: equipments } = useListEquipment({ status: "available" }, { query: { enabled: isEquipDialogOpen } });
+
+  const updateMutation = useUpdateShoot();
+  const deleteMutation = useDeleteShoot();
+  const addTeamMutation = useAddShootTeamMember();
+  const removeTeamMutation = useRemoveShootTeamMember();
+  const addEquipMutation = useAddShootEquipment();
+  const removeEquipMutation = useRemoveShootEquipment();
+
+  const handleUpdate = (data: ShootFormValues) => {
+    updateMutation.mutate({ id, data }, {
+      onSuccess: () => {
+        toast({ title: "Diária atualizada com sucesso" });
+        queryClient.invalidateQueries({ queryKey: getGetShootQueryKey(id) });
+        queryClient.invalidateQueries({ queryKey: getListShootsQueryKey() });
+        setIsEditing(false);
+      },
+      onError: (err) => {
+        toast({ title: "Erro ao atualizar", description: String(err), variant: "destructive" });
+      }
+    });
+  };
+
+  const handleDelete = () => {
+    deleteMutation.mutate({ id }, {
+      onSuccess: () => {
+        toast({ title: "Diária removida com sucesso" });
+        queryClient.invalidateQueries({ queryKey: getListShootsQueryKey() });
+        setLocation("/shoots");
+      },
+      onError: (err) => {
+        toast({ title: "Erro ao remover", description: String(err), variant: "destructive" });
+      }
+    });
+  };
+
+  const handleAddTeamMember = () => {
+    if (!teamMemberId || !teamRole) {
+      toast({ title: "Selecione o membro e a função", variant: "destructive" });
+      return;
+    }
+    
+    addTeamMutation.mutate({ 
+      id, 
+      data: { teamMemberId: parseInt(teamMemberId), role: teamRole } 
+    }, {
+      onSuccess: () => {
+        toast({ title: "Membro adicionado" });
+        queryClient.invalidateQueries({ queryKey: getGetShootQueryKey(id) });
+        setIsTeamDialogOpen(false);
+        setTeamMemberId("");
+        setTeamRole("");
+      }
+    });
+  };
+
+  const handleRemoveTeamMember = (memberId: number) => {
+    removeTeamMutation.mutate({ id, teamMemberId: memberId }, {
+      onSuccess: () => {
+        toast({ title: "Membro removido" });
+        queryClient.invalidateQueries({ queryKey: getGetShootQueryKey(id) });
+      }
+    });
+  };
+
+  const handleAddEquipment = () => {
+    if (!equipmentId || !equipQuantity) {
+      toast({ title: "Selecione o equipamento e a quantidade", variant: "destructive" });
+      return;
+    }
+    
+    addEquipMutation.mutate({ 
+      id, 
+      data: { equipmentId: parseInt(equipmentId), quantity: parseInt(equipQuantity) } 
+    }, {
+      onSuccess: () => {
+        toast({ title: "Equipamento adicionado" });
+        queryClient.invalidateQueries({ queryKey: getGetShootQueryKey(id) });
+        setIsEquipDialogOpen(false);
+        setEquipmentId("");
+        setEquipQuantity("1");
+      }
+    });
+  };
+
+  const handleRemoveEquipment = (equipId: number) => {
+    removeEquipMutation.mutate({ id, equipmentId: equipId }, {
+      onSuccess: () => {
+        toast({ title: "Equipamento removido" });
+        queryClient.invalidateQueries({ queryKey: getGetShootQueryKey(id) });
+      }
+    });
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      toast({ title: "Texto copiado!" });
+    });
+  };
+
+  const getPautaText = () => {
+    if (!shoot) return "";
+    const formattedDate = format(new Date(shoot.date), "dd/MM/yyyy");
+    
+    let text = `🎬 *Espelho da Pauta*\n`;
+    text += `📅 Data: ${formattedDate}\n`;
+    text += `⏰ Horário: ${shoot.time || 'A definir'}\n`;
+    text += `📍 Local: ${shoot.location}\n`;
+    if (shoot.whatsappSummary) text += `📝 Pauta: ${shoot.whatsappSummary}\n`;
+    if (shoot.producerName) text += `👤 Produtor: ${shoot.producerName}\n\n`;
+    
+    if (shoot.team && shoot.team.length > 0) {
+      text += `👥 *Equipe*\n`;
+      shoot.team.forEach(m => {
+        text += `${m.role}: ${m.teamMember.name}\n`;
+      });
+    }
+    
+    return text;
+  };
+
+  const getEquipmentText = () => {
+    if (!shoot) return "";
+    let text = `📦 *Espelho de Equipamentos*\n\n`;
+    
+    if (shoot.equipmentItems && shoot.equipmentItems.length > 0) {
+      shoot.equipmentItems.forEach(item => {
+        text += `- ${item.equipment.name} (${item.quantity}x)\n`;
+      });
+      text += `\n✅ Saída registrada`;
+    } else {
+      text += `Nenhum equipamento listado.`;
+    }
+    
+    return text;
+  };
+
+  const openWhatsApp = (text: string) => {
+    copyToClipboard(text);
+    window.open('https://web.whatsapp.com', '_blank');
+  };
+
+  if (isLoading || !shoot) {
+    return (
+      <Shell>
+        <div className="space-y-6 max-w-6xl mx-auto">
+          <Skeleton className="h-10 w-64" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2 space-y-6">
+              <Skeleton className="h-64 w-full" />
+              <Skeleton className="h-64 w-full" />
+            </div>
+            <div className="space-y-6">
+              <Skeleton className="h-64 w-full" />
+            </div>
+          </div>
+        </div>
+      </Shell>
+    );
+  }
+
+  if (isEditing) {
+    return (
+      <Shell>
+        <div className="space-y-6 max-w-4xl mx-auto">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => setIsEditing(false)}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Editar Diária</h1>
+              <p className="text-muted-foreground">{shoot.location}</p>
+            </div>
+          </div>
+          <Card>
+            <CardContent className="pt-6">
+              <ShootForm defaultValues={shoot} onSubmit={handleUpdate} isSubmitting={updateMutation.isPending} />
+            </CardContent>
+          </Card>
+        </div>
+      </Shell>
+    );
+  }
+
+  const formattedDate = format(new Date(shoot.date), "dd 'de' MMMM, yyyy", { locale: ptBR });
+
+  return (
+    <Shell>
+      <div className="space-y-6 max-w-6xl mx-auto">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex items-center gap-4">
+            <Link href="/shoots" className="text-muted-foreground hover:text-foreground shrink-0">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <ShootPriorityBadge priority={shoot.priority} />
+                <ShootStatusBadge status={shoot.status} />
+              </div>
+              <h1 className="text-3xl font-bold tracking-tight">{shoot.clientProject || shoot.location}</h1>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setIsEditing(true)}>
+              <Edit className="h-4 w-4 mr-2" /> Editar
+            </Button>
+            
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="icon">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta ação removerá a diária permanentemente. Os equipamentos voltarão ao status disponível se não houver checkout ativo.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Remover
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Informações Gerais</CardTitle>
+              </CardHeader>
+              <CardContent className="grid sm:grid-cols-2 gap-4">
+                <div className="flex items-start gap-3">
+                  <Calendar className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium">Data</p>
+                    <p className="text-sm text-muted-foreground">{formattedDate}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Clock className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium">Horário</p>
+                    <p className="text-sm text-muted-foreground">{shoot.time || "A definir"}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <MapPin className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium">Local</p>
+                    <p className="text-sm text-muted-foreground">{shoot.location}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Briefcase className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium">Produtor</p>
+                    <p className="text-sm text-muted-foreground">{shoot.producerName || "Não especificado"}</p>
+                  </div>
+                </div>
+                {shoot.briefing && (
+                  <div className="sm:col-span-2 mt-4 pt-4 border-t">
+                    <p className="text-sm font-medium mb-1">Briefing</p>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{shoot.briefing}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-lg">Equipe Escalada</CardTitle>
+                <Dialog open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Plus className="h-4 w-4 mr-1" /> Adicionar
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Adicionar Membro à Equipe</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 pt-4">
+                      <div className="space-y-2">
+                        <Label>Membro</Label>
+                        <Select value={teamMemberId} onValueChange={setTeamMemberId}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um membro ativo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {teamMembers?.map(tm => (
+                              <SelectItem key={tm.id} value={tm.id.toString()}>{tm.name} ({tm.primaryRole})</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Função na Gravação</Label>
+                        <Select value={teamRole} onValueChange={setTeamRole}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a função" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {TEAM_ROLES.map(r => (
+                              <SelectItem key={r} value={r}>{r}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Button onClick={handleAddTeamMember} className="w-full" disabled={addTeamMutation.isPending}>
+                        Adicionar
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </CardHeader>
+              <CardContent>
+                {!shoot.team || shoot.team.length === 0 ? (
+                  <div className="text-center py-6 text-muted-foreground border border-dashed rounded-lg">
+                    <Users className="h-8 w-8 mx-auto mb-2 opacity-20" />
+                    <p className="text-sm">Nenhum membro escalado</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {shoot.team.map((member) => (
+                      <div key={member.id} className="flex items-center justify-between p-3 border rounded-md">
+                        <div className="flex items-center gap-3">
+                          <div>
+                            <p className="font-medium text-sm">{member.teamMember.name}</p>
+                            <p className="text-xs text-muted-foreground">{member.role}</p>
+                          </div>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="text-destructive h-8 w-8"
+                          onClick={() => handleRemoveTeamMember(member.teamMemberId)}
+                          disabled={removeTeamMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-lg">Equipamentos Solicitados</CardTitle>
+                <Dialog open={isEquipDialogOpen} onOpenChange={setIsEquipDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Plus className="h-4 w-4 mr-1" /> Adicionar
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Adicionar Equipamento</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 pt-4">
+                      <div className="space-y-2">
+                        <Label>Equipamento</Label>
+                        <Select value={equipmentId} onValueChange={setEquipmentId}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um equipamento disponível" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {equipments?.map(eq => (
+                              <SelectItem key={eq.id} value={eq.id.toString()}>
+                                {eq.name} ({eq.availableQuantity} disp.)
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Quantidade</Label>
+                        <Input 
+                          type="number" 
+                          min="1" 
+                          value={equipQuantity} 
+                          onChange={e => setEquipQuantity(e.target.value)} 
+                        />
+                      </div>
+                      <Button onClick={handleAddEquipment} className="w-full" disabled={addEquipMutation.isPending}>
+                        Adicionar
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </CardHeader>
+              <CardContent>
+                {!shoot.equipmentItems || shoot.equipmentItems.length === 0 ? (
+                  <div className="text-center py-6 text-muted-foreground border border-dashed rounded-lg">
+                    <Camera className="h-8 w-8 mx-auto mb-2 opacity-20" />
+                    <p className="text-sm">Nenhum equipamento solicitado</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {shoot.equipmentItems.map((item) => (
+                      <div key={item.id} className="flex items-center justify-between p-3 border rounded-md">
+                        <div className="flex flex-col">
+                          <p className="font-medium text-sm">{item.equipment.name}</p>
+                          <p className="text-xs text-muted-foreground">Quantidade: {item.quantity}</p>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="text-destructive h-8 w-8"
+                          onClick={() => handleRemoveEquipment(item.equipmentId)}
+                          disabled={removeEquipMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {shoot.equipmentItems && shoot.equipmentItems.length > 0 && (
+                  <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                    <Link href={`/shoots/${shoot.id}/checkout`} className="flex-1">
+                      <Button className="w-full" variant="outline">
+                        Registrar Saída (Checkout)
+                      </Button>
+                    </Link>
+                    <Link href={`/shoots/${shoot.id}/return`} className="flex-1">
+                      <Button className="w-full" variant="outline">
+                        Registrar Devolução
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Espelho WhatsApp</CardTitle>
+                <CardDescription>Gere os textos formatados para envio</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => copyToClipboard(getPautaText())}
+                  >
+                    <Copy className="h-4 w-4 mr-2" /> Copiar Pauta
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => copyToClipboard(getEquipmentText())}
+                  >
+                    <Copy className="h-4 w-4 mr-2" /> Copiar Equipamentos
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => copyToClipboard(`${getPautaText()}\n\n${getEquipmentText()}`)}
+                  >
+                    <Copy className="h-4 w-4 mr-2" /> Copiar Tudo
+                  </Button>
+                </div>
+                <div className="pt-4 border-t">
+                  <Button 
+                    className="w-full"
+                    onClick={() => openWhatsApp(`${getPautaText()}\n\n${getEquipmentText()}`)}
+                  >
+                    <Send className="h-4 w-4 mr-2" /> Abrir WhatsApp
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {(shoot.checkout || shoot.return) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Status Logístico</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {shoot.checkout && (
+                    <div className="border-l-2 border-primary pl-3 py-1">
+                      <p className="text-sm font-medium">Checkout Realizado</p>
+                      <p className="text-xs text-muted-foreground mb-1">
+                        {format(new Date(shoot.checkout.checkoutAt), "dd/MM/yyyy HH:mm")}
+                      </p>
+                      <p className="text-xs">Entregue por: {shoot.checkout.deliveredBy}</p>
+                      <p className="text-xs">Recebido por: {shoot.checkout.receivedBy}</p>
+                    </div>
+                  )}
+                  
+                  {shoot.return && (
+                    <div className="border-l-2 border-green-500 pl-3 py-1">
+                      <p className="text-sm font-medium">Devolução Realizada</p>
+                      <p className="text-xs text-muted-foreground mb-1">
+                        {format(new Date(shoot.return.returnAt), "dd/MM/yyyy HH:mm")}
+                      </p>
+                      <p className="text-xs">Devolvido por: {shoot.return.returnedBy}</p>
+                      <p className="text-xs">Recebido por: {shoot.return.receivedBy}</p>
+                      {shoot.return.hasPendencies && (
+                        <p className="text-xs font-medium text-destructive mt-1">Com pendências/danos</p>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+      </div>
+    </Shell>
+  );
+}

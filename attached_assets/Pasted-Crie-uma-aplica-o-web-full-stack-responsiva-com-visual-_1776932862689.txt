@@ -1,0 +1,366 @@
+Crie uma aplicação web full-stack responsiva, com visual profissional, limpa, moderna e otimizada para uso tanto em desktop quanto em celular, para gestão operacional da produtora Nagibe.
+
+A aplicação deve funcionar muito bem em telas mobile e desktop, com interface adaptativa, botões grandes no celular, navegação simples, boa hierarquia visual e foco em produtividade.
+
+OBJETIVO DA APLICAÇÃO
+A aplicação será usada pelo setor da produtora que cuida das pessoas e dos equipamentos utilizados nas diárias de captação. O sistema deve controlar:
+1. cadastro de equipe
+2. cadastro de equipamentos
+3. criação de diárias/pautas
+4. definição da equipe da diária
+5. saída de equipamentos
+6. entrada/devolução de equipamentos
+7. geração de espelho resumido da pauta para WhatsApp
+8. geração de espelho resumido dos equipamentos para WhatsApp
+9. histórico de movimentações
+
+TECNOLOGIAS
+Escolha uma stack moderna e simples de manter dentro do Replit.
+Sugestão:
+- frontend com React
+- backend com Node.js + Express
+- banco de dados SQLite ou PostgreSQL, escolhendo a opção mais simples e estável no Replit
+- UI com Tailwind CSS
+- ícones com lucide-react
+- upload de imagens para avatar e imagens dos equipamentos
+- arquitetura organizada e escalável
+
+REQUISITOS DE UX/UI
+- Interface moderna, clara e elegante
+- Responsiva de verdade para celular e desktop
+- No desktop usar sidebar fixa e conteúdo principal amplo
+- No celular usar navegação inferior ou menu hamburguer
+- Criar dashboard inicial com cards e atalhos rápidos
+- Usar cores neutras e visual profissional
+- Botões grandes para ações principais
+- Toasts para feedbacks como “Texto copiado”, “Diária criada”, “Equipamento devolvido”
+- Tabelas no desktop e cards no mobile quando necessário
+- Filtros e busca em telas principais
+- Criar estados visuais claros para itens disponíveis, reservados, em uso, pendentes e em manutenção
+
+MÓDULOS DA APLICAÇÃO
+
+1. DASHBOARD
+Criar uma tela inicial com:
+- diárias de hoje
+- equipamentos pendentes de retorno
+- quantidade de pautas abertas
+- quantidade de equipamentos em uso
+- quantidade de equipamentos em manutenção
+- atalhos para criar nova diária, cadastrar equipe e cadastrar equipamento
+
+2. CADASTRO DE MEMBROS DA EQUIPE
+Criar um módulo para cadastrar pessoas da equipe com os seguintes campos:
+- nome completo
+- foto/avatar
+- função principal
+- função secundária opcional
+- telefone
+- observações
+- status ativo/inativo
+
+As funções devem ser cadastráveis e também existir uma lista padrão com:
+- diretor
+- produtor
+- cinegrafista
+- 2º cinegrafista
+- fotógrafo
+- assistente
+- assistente de maquinaria
+- assistente de câmera
+- operador de drone
+- editor
+- social media
+- motorista
+- apoio de produção
+
+Exibir os membros em layout de cards bonitos com foto, nome e função.
+
+3. CADASTRO DE EQUIPAMENTOS
+Criar módulo de equipamentos com:
+- nome do equipamento
+- categoria
+- ícone
+- foto opcional
+- código interno/patrimônio
+- quantidade total
+- quantidade disponível
+- estado
+- localização de armazenamento
+- observações
+- status ativo/inativo
+
+Categorias sugeridas:
+- câmera
+- lente
+- áudio
+- luz
+- tripé
+- bateria
+- cartão de memória
+- drone
+- maquinaria
+- acessórios
+
+Cada categoria deve ter ícone visual.
+
+Estados possíveis:
+- disponível
+- reservado
+- em uso
+- em manutenção
+- avariado
+- pendente de retorno
+
+4. CRIAÇÃO DE DIÁRIA / PAUTA
+Criar módulo para criar diárias de captação com:
+- data
+- horário opcional
+- local
+- briefing interno completo
+- resumo curto para WhatsApp
+- produtor responsável
+- cliente ou projeto opcional
+- prioridade (baixa, média, alta, urgente)
+- status da diária
+
+Status sugeridos:
+- planejada
+- equipe definida
+- equipamento separado
+- saída concluída
+- em andamento
+- retorno pendente
+- encerrada
+
+5. DEFINIÇÃO DA EQUIPE DA DIÁRIA
+Dentro da diária, permitir selecionar os membros da equipe.
+A equipe deve ser flexível. Pode ter ou não:
+- diretor
+- produtor
+- 1 ou 2 cinegrafistas
+- assistente
+- assistente de maquinaria
+- fotógrafo
+- operador de drone
+- outros
+
+Permitir definir a função da pessoa naquela diária, independentemente da função padrão dela no cadastro.
+
+Separar:
+- equipe prevista
+- equipe confirmada
+
+6. SAÍDA DE EQUIPAMENTOS
+Dentro da diária, permitir selecionar equipamentos para saída.
+Campos importantes:
+- item
+- quantidade
+- observação por item
+- estado na saída
+
+Registrar também:
+- entregue por
+- revisado por
+- recebido por / responsável da equipe
+- data e hora da saída
+
+A saída deve gerar um checklist simples.
+
+7. ENTRADA / DEVOLUÇÃO DE EQUIPAMENTOS
+Criar tela de retorno dos equipamentos com:
+- item esperado
+- quantidade enviada
+- quantidade devolvida
+- estado na devolução
+- observação
+- falta ou avaria
+
+Registrar:
+- devolvido por
+- revisado por
+- recebido por
+- data e hora da devolução
+
+Se houver divergência, mostrar alerta visual e registrar pendência.
+
+8. HISTÓRICO
+Criar módulo de histórico com filtros por:
+- data
+- diária
+- equipamento
+- pessoa
+- tipo de movimentação
+
+Registrar tudo:
+- quem criou a diária
+- quem alterou
+- quem fez saída
+- quem revisou saída
+- quem fez devolução
+- quem revisou devolução
+
+9. GERAÇÃO DE ESPELHOS PARA WHATSAPP
+Esse é um requisito muito importante.
+
+Dentro de cada diária, criar três botões:
+- Copiar pauta
+- Copiar equipamentos
+- Copiar tudo
+
+Ao clicar, o sistema deve:
+- gerar automaticamente um texto resumido formatado para WhatsApp
+- copiar esse texto para a área de transferência
+- exibir um toast com a mensagem “Texto copiado”
+
+Criar também um botão:
+- Abrir WhatsApp
+
+Ao clicar:
+- copiar o texto automaticamente
+- abrir o WhatsApp Web em nova aba
+- exibir toast “Texto copiado. Cole no WhatsApp.”
+
+IMPORTANTE:
+não tentar colar automaticamente dentro do WhatsApp. Apenas copiar e abrir o WhatsApp.
+
+FORMATO DO ESPELHO DA PAUTA
+Gerar texto resumido, bonito, objetivo e fácil de ler no WhatsApp.
+Exemplo de estrutura:
+
+🎬 *Espelho da Pauta*
+📅 Data: [data]
+⏰ Horário: [horário]
+📍 Local: [local]
+📝 Pauta: [resumo curto para WhatsApp]
+👤 Produtor: [nome]
+
+👥 *Equipe*
+Diretor: [nome]
+Cinegrafista: [nome]
+2º Cinegrafista: [nome]
+Assistente: [nome]
+
+FORMATO DO ESPELHO DE EQUIPAMENTOS
+Exemplo:
+
+📦 *Espelho de Equipamentos*
+🎥 Câmera Sony FX3 - 1
+🔭 Lente 24-70mm - 1
+🔋 Bateria - 4
+💾 Cartão SD - 2
+🎤 Microfone sem fio - 1
+🦯 Tripé - 1
+
+✅ Entregue por: [nome]
+✅ Revisado por: [nome]
+
+FORMATO DO ESPELHO COMPLETO
+Unir pauta + equipe + equipamentos em um texto só.
+
+10. BUSCA E FILTROS
+Adicionar busca por texto em:
+- equipe
+- equipamentos
+- diárias
+
+Adicionar filtros por status e data.
+
+11. RESPONSIVIDADE
+Isso é obrigatório.
+A aplicação deve funcionar muito bem no celular e no desktop.
+
+No desktop:
+- sidebar lateral
+- tabelas e grids amplos
+- formulários em múltiplas colunas
+
+No celular:
+- navegação simplificada
+- cards empilhados
+- botões grandes
+- formulários em uma coluna
+- tabelas adaptadas para cards
+- ações principais acessíveis com poucos toques
+
+12. ESTRUTURA DO BANCO
+Criar estrutura de dados para:
+- users ou operadores, se necessário
+- team_members
+- roles
+- equipment_categories
+- equipment_items
+- shoots
+- shoot_team_members
+- shoot_equipment_items
+- equipment_checkouts
+- equipment_returns
+- activity_logs
+
+13. EXTRAS IMPORTANTES
+Adicionar:
+- validação de formulários
+- mensagens de erro amigáveis
+- confirmação em ações críticas
+- imagens/avatar funcionando
+- layout limpo e profissional
+- código organizado por componentes
+- páginas separadas por módulo
+- seed inicial com alguns dados de exemplo para testar
+
+14. REGRAS DE NEGÓCIO IMPORTANTES
+- Um equipamento em manutenção não pode ser adicionado à saída
+- Um equipamento pendente de retorno deve aparecer em destaque
+- A diária só pode ser encerrada quando não houver pendências abertas, ou então deve pedir confirmação explícita
+- Cada item na saída e na devolução deve permitir observação
+- O sistema deve ser rápido e simples de usar
+- A experiência deve priorizar operação real da produtora
+
+15. NOMES DAS TELAS
+Criar as seguintes telas:
+- Dashboard
+- Equipe
+- Equipamentos
+- Diárias
+- Nova Diária
+- Detalhe da Diária
+- Saída de Equipamentos
+- Devolução de Equipamentos
+- Histórico
+- Configurações
+
+16. ENTREGA ESPERADA
+Quero que você:
+- gere toda a estrutura do projeto
+- crie frontend e backend
+- configure o banco
+- implemente o layout responsivo
+- crie dados iniciais de exemplo
+- deixe a aplicação pronta para rodar no Replit
+- explique ao final como executar
+- explique onde alterar logo, nome da empresa e cores
+- explique onde editar os modelos de texto do WhatsApp
+
+17. IDENTIDADE VISUAL
+Nome do sistema:
+Nagibe Produção
+
+Tom visual:
+- profissional
+- clean
+- moderno
+- operacional
+- elegante
+- sem excesso de efeitos
+
+18. PRIORIDADE
+Priorize primeiro:
+1. cadastro de equipe
+2. cadastro de equipamentos
+3. criação de diária
+4. definição de equipe
+5. saída e devolução
+6. espelho da pauta e equipamentos para WhatsApp
+7. histórico
+
+Crie a aplicação de forma funcional, com código limpo, componentes reutilizáveis e estrutura pronta para expansão futura.

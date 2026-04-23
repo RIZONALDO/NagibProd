@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Nagibe Produção"
+version = "1.0.0"
+id = "artifacts/nagibe"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23105
+
+[services.development]
+run = "pnpm --filter @workspace/nagibe run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/nagibe", "run", "build" ]
+publicDir = "artifacts/nagibe/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23105"
+BASE_PATH = "/"
