@@ -135,7 +135,7 @@ export default function ShootDetail() {
   };
 
   const handleRemoveTeamMember = (memberId: number) => {
-    removeTeamMutation.mutate({ id, teamMemberId: memberId }, {
+    removeTeamMutation.mutate({ id, memberId }, {
       onSuccess: () => {
         toast({ title: "Membro removido" });
         queryClient.invalidateQueries({ queryKey: getGetShootQueryKey(id) });
@@ -257,8 +257,8 @@ export default function ShootDetail() {
     if (toAdd.length > 0) toast({ title: `${toAdd.length} item(s) opcional(is) adicionado(s)` });
   }, [linkedSuggestion, id, queryClient]);
 
-  const handleRemoveEquipment = (equipId: number) => {
-    removeEquipMutation.mutate({ id, equipmentId: equipId }, {
+  const handleRemoveEquipment = (itemId: number) => {
+    removeEquipMutation.mutate({ id, itemId }, {
       onSuccess: () => {
         toast({ title: "Equipamento removido" });
         queryClient.invalidateQueries({ queryKey: getGetShootQueryKey(id) });
@@ -628,7 +628,7 @@ export default function ShootDetail() {
                               variant="ghost" 
                               size="icon" 
                               className="text-destructive h-8 w-8"
-                              onClick={() => handleRemoveEquipment(item.equipmentId)}
+                              onClick={() => handleRemoveEquipment(item.id)}
                               disabled={removeEquipMutation.isPending}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -652,7 +652,7 @@ export default function ShootDetail() {
                                 variant="ghost"
                                 size="icon"
                                 className="text-destructive h-7 w-7"
-                                onClick={() => handleRemoveEquipment(child.equipmentId)}
+                                onClick={() => handleRemoveEquipment(child.id)}
                                 disabled={removeEquipMutation.isPending}
                               >
                                 <Trash2 className="h-3.5 w-3.5" />

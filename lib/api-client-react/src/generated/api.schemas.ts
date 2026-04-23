@@ -344,6 +344,9 @@ export interface ShootEquipmentItem {
   notes?: string | null;
   /** @nullable */
   conditionOut?: string | null;
+  isLinkedItem: boolean;
+  /** @nullable */
+  parentShootEquipmentId?: number | null;
   equipment: Equipment;
 }
 
