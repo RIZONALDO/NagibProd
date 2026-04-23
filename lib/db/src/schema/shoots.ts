@@ -15,6 +15,7 @@ export const shootsTable = pgTable("shoots", {
   hasTravel: boolean("has_travel").notNull().default(false),
   priority: text("priority").notNull().default("medium"),
   status: text("status").notNull().default("planned"),
+  scheduleChangedAt: timestamp("schedule_changed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

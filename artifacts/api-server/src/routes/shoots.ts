@@ -45,6 +45,7 @@ const router = Router();
 function serializeShoot(s: typeof shootsTable.$inferSelect) {
   return {
     ...s,
+    scheduleChangedAt: s.scheduleChangedAt ? s.scheduleChangedAt.toISOString() : null,
     createdAt: s.createdAt.toISOString(),
     updatedAt: s.updatedAt.toISOString(),
   };
@@ -258,6 +259,13 @@ router.patch("/shoots/:id", async (req, res): Promise<void> => {
     return;
   }
 
+  // Fetch current shoot to detect schedule changes
+  const [current] = await db.select().from(shootsTable).where(eq(shootsTable.id, params.data.id));
+  if (!current) {
+    res.status(404).json({ error: "Shoot not found" });
+    return;
+  }
+
   const updateData: Record<string, unknown> = {};
   if (parsed.data.date !== undefined) updateData.date = parsed.data.date;
   if (parsed.data.time !== undefined) updateData.time = parsed.data.time;
@@ -271,6 +279,23 @@ router.patch("/shoots/:id", async (req, res): Promise<void> => {
   if (typeof req.body.hasTravel === "boolean") updateData.hasTravel = req.body.hasTravel;
   if (req.body.endDate !== undefined) updateData.endDate = req.body.endDate || null;
   if (parsed.data.date !== undefined) updateData.date = parsed.data.date;
+
+  // Allow explicit dismissal of the schedule-change warning
+  if (req.body.scheduleChangedAt === null) {
+    updateData.scheduleChangedAt = null;
+  } else {
+    // Detect if date, endDate, or time changed and mark the flag
+    const newDate = (updateData.date as string | undefined) ?? current.date;
+    const newEndDate = (updateData.endDate as string | null | undefined) ?? current.endDate;
+    const newTime = (updateData.time as string | undefined) ?? current.time;
+    const scheduleChanged =
+      newDate !== current.date ||
+      newEndDate !== current.endDate ||
+      newTime !== current.time;
+    if (scheduleChanged) {
+      updateData.scheduleChangedAt = new Date();
+    }
+  }
 
   const [shoot] = await db
     .update(shootsTable)
