@@ -6,6 +6,19 @@ import { requireAuth, requireAdmin } from "../lib/auth-middleware";
 
 const router = Router();
 
+router.get("/settings/public", async (_req, res): Promise<void> => {
+  const publicKeys = ["company_name", "system_name", "logo_url"];
+  const rows = await db
+    .select()
+    .from(appSettingsTable)
+    .where(
+      or(...publicKeys.map(k => eq(appSettingsTable.key, k)))
+    );
+  const settings: Record<string, string | null> = {};
+  for (const row of rows) settings[row.key] = row.value;
+  res.json(settings);
+});
+
 router.get("/settings/app", requireAuth, async (req, res): Promise<void> => {
   const rows = await db.select().from(appSettingsTable);
   const settings: Record<string, string | null> = {};

@@ -1,10 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Video, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
+
+interface PublicSettings {
+  company_name?: string | null;
+  system_name?: string | null;
+  logo_url?: string | null;
+}
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -14,6 +20,17 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [settings, setSettings] = useState<PublicSettings>({});
+
+  useEffect(() => {
+    fetch("/api/settings/public")
+      .then(r => r.json())
+      .then(data => setSettings(data))
+      .catch(() => {});
+  }, []);
+
+  const companyName = settings.company_name || settings.system_name || "Nagibe Produção";
+  const logoUrl = settings.logo_url;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,12 +52,20 @@ export default function LoginPage() {
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center space-y-3">
           <div className="flex justify-center">
-            <div className="bg-primary text-primary-foreground p-3 rounded-xl">
-              <Video className="h-8 w-8" />
-            </div>
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={companyName}
+                className="h-16 w-16 object-contain rounded-xl"
+              />
+            ) : (
+              <div className="bg-primary text-primary-foreground p-3 rounded-xl">
+                <Video className="h-8 w-8" />
+              </div>
+            )}
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Nagibe Produção</h1>
+            <h1 className="text-2xl font-bold tracking-tight">{companyName}</h1>
             <p className="text-muted-foreground text-sm mt-1">
               Bem-vindo ao sistema de gestão operacional.
             </p>
