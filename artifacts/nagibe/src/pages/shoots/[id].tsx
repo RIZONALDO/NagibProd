@@ -574,7 +574,7 @@ export default function ShootDetail() {
                           variant="ghost" 
                           size="icon" 
                           className="text-destructive h-8 w-8"
-                          onClick={() => handleRemoveTeamMember(member.teamMemberId)}
+                          onClick={() => handleRemoveTeamMember(member.id)}
                           disabled={removeTeamMutation.isPending}
                         >
                           <Trash2 className="h-4 w-4" />
