@@ -17,6 +17,7 @@ import {
   Monitor,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -30,6 +31,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { settingsApi } from "@/lib/auth-api";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -68,6 +70,15 @@ export function Shell({ children }: { children: React.ReactNode }) {
   });
   const { user, isAdmin, logout } = useAuth();
   const { theme, setTheme, resolvedTheme } = useTheme();
+
+  const { data: appSettings } = useQuery({
+    queryKey: ["app-settings"],
+    queryFn: settingsApi.getApp,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const companyName = appSettings?.company_name || "Nagibe Produção";
+  const systemName = appSettings?.system_name || "Sistema de Gestão";
 
   useEffect(() => {
     try { localStorage.setItem("nagibe-sidebar-collapsed", String(isCollapsed)); } catch { /* ignore */ }
@@ -137,8 +148,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
           {!isCollapsed && (
             <div className="min-w-0">
-              <p className="font-bold text-lg tracking-tight leading-tight truncate">Nagibe Produção</p>
-              <p className="text-[10px] font-light text-muted-foreground tracking-wide leading-tight">Sistema de Gestão&nbsp;&nbsp;v1.0</p>
+              <p className="font-bold text-lg tracking-tight leading-tight truncate">{companyName}</p>
+              <p className="text-[10px] font-light text-muted-foreground tracking-wide leading-tight">{systemName}&nbsp;&nbsp;v1.0</p>
             </div>
           )}
         </div>
@@ -246,8 +257,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <Video className="h-4 w-4" />
             </div>
             <div>
-              <p className="font-bold tracking-tight leading-tight text-sm">Nagibe Produção</p>
-              <p className="text-[9px] font-light text-muted-foreground tracking-wide leading-tight">Sistema de Gestão&nbsp;&nbsp;v1.0</p>
+              <p className="font-bold tracking-tight leading-tight text-sm">{companyName}</p>
+              <p className="text-[9px] font-light text-muted-foreground tracking-wide leading-tight">{systemName}&nbsp;&nbsp;v1.0</p>
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -266,8 +277,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
                     <Video className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="font-bold text-lg tracking-tight leading-tight">Nagibe Produção</p>
-                    <p className="text-[10px] font-light text-muted-foreground tracking-wide leading-tight">Sistema de Gestão&nbsp;&nbsp;v1.0</p>
+                    <p className="font-bold text-lg tracking-tight leading-tight">{companyName}</p>
+                    <p className="text-[10px] font-light text-muted-foreground tracking-wide leading-tight">{systemName}&nbsp;&nbsp;v1.0</p>
                   </div>
                 </div>
                 <NavLinks onClick={() => setIsMobileMenuOpen(false)} />
