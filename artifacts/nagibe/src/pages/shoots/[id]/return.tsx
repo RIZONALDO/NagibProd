@@ -1,17 +1,83 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Shell } from "@/components/layout/Shell";
 import { useGetShoot, useReturnEquipment, getGetShootQueryKey, getListShootsQueryKey } from "@workspace/api-client-react";
 import { useLocation, useParams } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, CheckCircle2, AlertTriangle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, AlertTriangle, User } from "lucide-react";
 import { Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+
+interface TeamMemberOption {
+  name: string;
+  role: string;
+}
+
+function TeamMemberCombobox({
+  label,
+  value,
+  onChange,
+  options,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: TeamMemberOption[];
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const filtered = options.filter(o =>
+    o.name.toLowerCase().includes(value.toLowerCase())
+  );
+  const showDropdown = open && value.length > 0 && filtered.length > 0;
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  return (
+    <div className="space-y-2 relative" ref={containerRef}>
+      <Label>{label}</Label>
+      <Input
+        value={value}
+        onChange={e => { onChange(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        placeholder={placeholder}
+        autoComplete="off"
+      />
+      {showDropdown && (
+        <div className="absolute z-50 top-full mt-1 w-full bg-popover border rounded-lg shadow-lg overflow-hidden">
+          {filtered.map((o, idx) => (
+            <button
+              key={idx}
+              type="button"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent text-left"
+              onMouseDown={e => { e.preventDefault(); onChange(o.name); setOpen(false); }}
+            >
+              <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              <span className="font-medium">{o.name}</span>
+              <span className="text-muted-foreground text-xs ml-auto">{o.role}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function ReturnShoot() {
   const params = useParams();
@@ -24,8 +90,12 @@ export default function ReturnShoot() {
   const returnMutation = useReturnEquipment();
 
   const [returnedBy, setReturnedBy] = useState("");
-  const [reviewedBy, setReviewedBy] = useState("");
   const [receivedBy, setReceivedBy] = useState("");
+
+  const teamOptions: TeamMemberOption[] = (shoot?.team ?? []).map(m => ({
+    name: m.teamMember.name,
+    role: m.role,
+  }));
   
   const [itemReturns, setItemReturns] = useState<Record<number, { 
     quantityReturned: string, 
@@ -82,7 +152,7 @@ export default function ReturnShoot() {
       id,
       data: {
         returnedBy,
-        reviewedBy: reviewedBy || receivedBy,
+        reviewedBy: receivedBy,
         receivedBy,
         items
       }
@@ -149,20 +219,27 @@ export default function ReturnShoot() {
         <Card>
           <CardHeader>
             <CardTitle>Responsáveis</CardTitle>
+            {teamOptions.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Digite para buscar na equipe escalada para esta pauta.
+              </p>
+            )}
           </CardHeader>
-          <CardContent className="grid sm:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Devolvido por (Equipe)</Label>
-              <Input value={returnedBy} onChange={e => setReturnedBy(e.target.value)} placeholder="Nome de quem trouxe" />
-            </div>
-            <div className="space-y-2">
-              <Label>Revisado por</Label>
-              <Input value={reviewedBy} onChange={e => setReviewedBy(e.target.value)} placeholder="Opcional" />
-            </div>
-            <div className="space-y-2">
-              <Label>Recebido por (Acervo)</Label>
-              <Input value={receivedBy} onChange={e => setReceivedBy(e.target.value)} placeholder="Nome do conferente" />
-            </div>
+          <CardContent className="grid sm:grid-cols-2 gap-4">
+            <TeamMemberCombobox
+              label="Devolvido por (Equipe)"
+              value={returnedBy}
+              onChange={setReturnedBy}
+              options={teamOptions}
+              placeholder="Nome de quem trouxe"
+            />
+            <TeamMemberCombobox
+              label="Recebido por (Acervo)"
+              value={receivedBy}
+              onChange={setReceivedBy}
+              options={teamOptions}
+              placeholder="Nome do conferente"
+            />
           </CardContent>
         </Card>
 
