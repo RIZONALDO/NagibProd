@@ -90,7 +90,7 @@ export default function ProfilesTab() {
                 <Shield className={`h-5 w-5 ${profile.color}`} />
                 <CardTitle className={`text-base ${profile.color}`}>{profile.name}</CardTitle>
               </div>
-              <CardDescription className="text-xs">{profile.description}</CardDescription>
+              <CardDescription className="text-xs !text-gray-600">{profile.description}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-1.5">
               {profile.permissions.map((perm) => (
@@ -100,7 +100,7 @@ export default function ProfilesTab() {
                   ) : (
                     <XCircle className="h-4 w-4 text-gray-400 shrink-0" />
                   )}
-                  <span className={perm.allowed ? "text-foreground" : "text-muted-foreground line-through"}>
+                  <span className={perm.allowed ? "text-gray-800" : "text-gray-400 line-through"}>
                     {perm.label}
                   </span>
                 </div>
