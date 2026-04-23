@@ -16,10 +16,10 @@ export default function NewEquipment() {
 
   const handleSubmit = (data: EquipmentFormValues) => {
     createMutation.mutate({ data: { ...data, active: true } }, {
-      onSuccess: () => {
-        toast({ title: "Equipamento criado com sucesso" });
+      onSuccess: (created) => {
+        toast({ title: "Equipamento criado!", description: "Adicione itens vinculados se necessário." });
         queryClient.invalidateQueries({ queryKey: getListEquipmentQueryKey() });
-        setLocation("/equipment");
+        setLocation(`/equipment/${created.id}`);
       },
       onError: (err) => {
         toast({ title: "Erro ao criar", description: String(err), variant: "destructive" });
