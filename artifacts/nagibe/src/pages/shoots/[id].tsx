@@ -22,7 +22,21 @@ import { useLocation, useParams } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, Trash2, Copy, Send, Edit, Plus, Users, Camera, Calendar, MapPin, Clock, Briefcase } from "lucide-react";
+import { ArrowLeft, Trash2, Copy, Send, Edit, Plus, Users, Camera, Calendar, MapPin, Clock, Briefcase, UserCircle2 } from "lucide-react";
+
+function getInitials(name: string) {
+  return name.split(" ").slice(0, 2).map(n => n[0]).join("").toUpperCase();
+}
+
+const AVATAR_COLORS = [
+  "bg-blue-500", "bg-violet-500", "bg-emerald-500", "bg-amber-500",
+  "bg-rose-500", "bg-cyan-500", "bg-fuchsia-500", "bg-orange-500",
+];
+function getAvatarColor(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
 import { Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -536,10 +550,13 @@ export default function ShootDetail() {
                     <p className="text-sm">Nenhum membro escalado</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {shoot.team.map((member) => (
-                      <div key={member.id} className="flex items-center justify-between p-3 border rounded-md">
+                      <div key={member.id} className="flex items-center justify-between p-3 border rounded-xl bg-card">
                         <div className="flex items-center gap-3">
+                          <div className={`h-9 w-9 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 ${getAvatarColor(member.teamMember.name)}`}>
+                            {getInitials(member.teamMember.name)}
+                          </div>
                           <div>
                             <p className="font-medium text-sm">{member.teamMember.name}</p>
                             <p className="text-xs text-muted-foreground">{member.role}</p>
@@ -641,11 +658,17 @@ export default function ShootDetail() {
                       const orphaned = items.filter(i => i.isLinkedItem && !i.parentShootEquipmentId);
                       const allParents = [...parentItems, ...orphaned];
 
-                      return allParents.map(item => (
+                      return allParents.map(item => {
+                        const CatIcon = EQUIPMENT_CATEGORIES.find(c => c.value === item.equipment?.category)?.icon || Camera;
+                        return (
                         <div key={item.id}>
                           {/* Parent row */}
                           <div className="flex items-center justify-between p-3 border rounded-xl bg-card">
-                            <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                                <CatIcon className="h-4 w-4 text-primary" />
+                              </div>
+                            <div className="flex flex-col gap-1 min-w-0">
                               <p className="font-medium text-sm">{item.equipment?.name}</p>
                               <div className="flex items-center gap-2">
                                 <p className="text-xs text-muted-foreground">Quantidade: {item.quantity}</p>
@@ -655,6 +678,7 @@ export default function ShootDetail() {
                                   </span>
                                 )}
                               </div>
+                            </div>
                             </div>
                             <Button 
                               variant="ghost" 
@@ -692,7 +716,8 @@ export default function ShootDetail() {
                             </div>
                           ))}
                         </div>
-                      ));
+                      );
+                      });
                     })()}
                   </div>
                 )}

@@ -5,7 +5,8 @@ import { useLocation, useParams } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, CheckCircle2, AlertTriangle, User, ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowLeft, CheckCircle2, AlertTriangle, User, ChevronDown, ChevronRight, Camera } from "lucide-react";
+import { EQUIPMENT_CATEGORIES } from "@/lib/constants";
 import { Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -267,6 +268,7 @@ export default function ReturnShoot() {
                 const isMissing = parseInt(returnData.quantityReturned || "0") < item.quantity;
                 const hasProblem = isMissing || returnData.hasDamage;
                 const isExpanded = expandedItems.has(item.equipmentId);
+                const CatIcon = EQUIPMENT_CATEGORIES.find(c => c.value === item.equipment?.category)?.icon || Camera;
 
                 return (
                   <div key={item.id}>
@@ -282,6 +284,9 @@ export default function ReturnShoot() {
                         ? <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
                         : <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                       }
+                      <div className="h-7 w-7 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+                        <CatIcon className="h-3.5 w-3.5 text-primary" />
+                      </div>
                       <span className="flex-1 font-medium text-sm">{item.equipment.name}</span>
                       <span className="text-xs text-muted-foreground shrink-0">
                         {returnData.quantityReturned || item.quantity}/{item.quantity}

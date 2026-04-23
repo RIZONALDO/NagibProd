@@ -5,7 +5,8 @@ import { useLocation, useParams } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, CheckCircle2, User } from "lucide-react";
+import { ArrowLeft, CheckCircle2, User, Camera } from "lucide-react";
+import { EQUIPMENT_CATEGORIES } from "@/lib/constants";
 import { Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -224,14 +225,21 @@ export default function CheckoutShoot() {
             <CardDescription>Verifique o estado de cada item antes da saída.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {shoot.equipmentItems.map((item) => (
+            {shoot.equipmentItems.map((item) => {
+              const CatIcon = EQUIPMENT_CATEGORIES.find(c => c.value === item.equipment?.category)?.icon || Camera;
+              return (
               <div key={item.id} className="border rounded-lg p-4 bg-muted/20">
                 <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <p className="font-semibold text-lg">{item.equipment.name}</p>
-                    <p className="text-sm text-muted-foreground">Código: {item.equipment.internalCode || 'N/A'}</p>
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <CatIcon className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-base">{item.equipment.name}</p>
+                      <p className="text-sm text-muted-foreground">Código: {item.equipment.internalCode || 'N/A'}</p>
+                    </div>
                   </div>
-                  <div className="bg-primary text-primary-foreground px-3 py-1 rounded font-medium text-sm">
+                  <div className="bg-primary text-primary-foreground px-3 py-1 rounded font-medium text-sm shrink-0">
                     Qtd: {item.quantity}
                   </div>
                 </div>
@@ -255,7 +263,8 @@ export default function CheckoutShoot() {
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </CardContent>
         </Card>
 
