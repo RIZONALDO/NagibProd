@@ -40,7 +40,7 @@ function getAvatarColor(name: string) {
 import { Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { ShootStatusBadge, ShootPriorityBadge, EquipmentStatusBadge } from "@/components/ui/status-badge";
+import { ShootStatusBadge, ShootPriorityBadge, EquipmentStatusBadge, ShootOverdueBadge, isShootOverdue } from "@/components/ui/status-badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -404,6 +404,9 @@ export default function ShootDetail() {
               <div className="flex items-center gap-2 mb-1">
                 <ShootPriorityBadge priority={shoot.priority} />
                 <ShootStatusBadge status={shoot.status} />
+                {isShootOverdue({ status: shoot.status, date: shoot.date, endDate: (shoot as { endDate?: string | null }).endDate }) && (
+                  <ShootOverdueBadge />
+                )}
               </div>
               <h1 className="text-3xl font-bold tracking-tight">{shoot.clientProject || shoot.location}</h1>
             </div>

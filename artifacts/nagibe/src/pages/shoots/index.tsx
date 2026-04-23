@@ -10,7 +10,7 @@ import { Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ShootStatusBadge, ShootPriorityBadge } from "@/components/ui/status-badge";
+import { ShootStatusBadge, ShootPriorityBadge, ShootOverdueBadge, isShootOverdue } from "@/components/ui/status-badge";
 import { SHOOT_STATUS_LABELS } from "@/lib/constants";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -89,7 +89,12 @@ export default function ShootsList() {
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <ShootPriorityBadge priority={shoot.priority} className="shrink-0" />
-                      <ShootStatusBadge status={shoot.status} className="shrink-0" />
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {isShootOverdue(shoot as { status: string; date: string; endDate?: string | null }) && (
+                          <ShootOverdueBadge />
+                        )}
+                        <ShootStatusBadge status={shoot.status} />
+                      </div>
                     </div>
                     <CardTitle className="text-lg font-bold group-hover:text-primary transition-colors line-clamp-2">
                       {shoot.location}

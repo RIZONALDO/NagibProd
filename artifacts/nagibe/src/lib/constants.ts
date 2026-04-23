@@ -65,7 +65,7 @@ export const SHOOT_STATUS_COLORS: Record<string, string> = {
   checkout_done: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300",
   in_progress: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
   return_pending: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300",
-  closed: "bg-slate-700 text-slate-100 dark:bg-slate-700 dark:text-slate-300",
+  closed: "bg-green-600 text-white dark:bg-green-700 dark:text-white",
 };
 
 export const SHOOT_STATUS_LABELS: Record<string, string> = {
@@ -75,7 +75,7 @@ export const SHOOT_STATUS_LABELS: Record<string, string> = {
   checkout_done: "Saída Registrada",
   in_progress: "Em Andamento",
   return_pending: "Retorno Pendente",
-  closed: "Fechado",
+  closed: "Finalizada",
 };
 
 export const SHOOT_PRIORITY_COLORS: Record<string, string> = {
