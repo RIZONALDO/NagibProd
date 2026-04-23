@@ -579,6 +579,8 @@ export default function ShootDetail() {
                   <TravelSection
                     shootId={id}
                     hasTravel={!!(shoot as { hasTravel?: boolean }).hasTravel}
+                    shootDate={shoot.date}
+                    shootEndDate={(shoot as { endDate?: string | null }).endDate ?? null}
                     team={(shoot.team ?? []).map(m => ({
                       id: m.id,
                       teamMemberId: m.teamMemberId,
