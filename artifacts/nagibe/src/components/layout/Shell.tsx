@@ -140,16 +140,20 @@ export function Shell({ children }: { children: React.ReactNode }) {
       >
         {/* Logo */}
         <div className={cn(
-          "flex items-center gap-2 mb-8",
-          isCollapsed ? "justify-center px-1" : "px-2"
+          "mb-8",
+          isCollapsed ? "flex justify-center px-1" : "px-2"
         )}>
-          <div className="bg-primary text-primary-foreground p-1.5 rounded-md shrink-0">
-            <Video className="h-5 w-5" />
+          <div className={cn("flex items-center gap-3", isCollapsed && "justify-center")}>
+            <div className="bg-primary text-primary-foreground p-2 rounded-lg shrink-0">
+              <Video className="h-7 w-7" />
+            </div>
+            {!isCollapsed && (
+              <p className="font-bold text-xl tracking-tight leading-tight truncate">{companyName}</p>
+            )}
           </div>
           {!isCollapsed && (
-            <div className="min-w-0">
-              <p className="font-bold text-lg tracking-tight leading-tight truncate">{companyName}</p>
-              <p className="text-[10px] font-light text-muted-foreground tracking-wide leading-tight">{systemName}&nbsp;&nbsp;v1.0</p>
+            <div className="mt-2 pt-2 border-t border-border">
+              <p className="text-[10px] font-light text-muted-foreground tracking-wide">{systemName}&nbsp;&nbsp;v1.0</p>
             </div>
           )}
         </div>
@@ -253,12 +257,14 @@ export function Shell({ children }: { children: React.ReactNode }) {
         {/* Mobile Header */}
         <header className="md:hidden flex items-center justify-between border-b bg-card px-4 h-14 shrink-0">
           <div className="flex items-center gap-2">
-            <div className="bg-primary text-primary-foreground p-1 rounded-md shrink-0">
-              <Video className="h-4 w-4" />
+            <div className="bg-primary text-primary-foreground p-1.5 rounded-md shrink-0">
+              <Video className="h-5 w-5" />
             </div>
             <div>
-              <p className="font-bold tracking-tight leading-tight text-sm">{companyName}</p>
-              <p className="text-[9px] font-light text-muted-foreground tracking-wide leading-tight">{systemName}&nbsp;&nbsp;v1.0</p>
+              <p className="font-bold tracking-tight text-base leading-tight">{companyName}</p>
+              <div className="border-t border-border mt-1 pt-1">
+                <p className="text-[9px] font-light text-muted-foreground tracking-wide leading-none">{systemName}&nbsp;&nbsp;v1.0</p>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -277,8 +283,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
                     <Video className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="font-bold text-lg tracking-tight leading-tight">{companyName}</p>
-                    <p className="text-[10px] font-light text-muted-foreground tracking-wide leading-tight">{systemName}&nbsp;&nbsp;v1.0</p>
+                    <p className="font-bold text-xl tracking-tight leading-tight">{companyName}</p>
+                    <div className="border-t border-border mt-2 pt-2">
+                      <p className="text-[10px] font-light text-muted-foreground tracking-wide leading-none">{systemName}&nbsp;&nbsp;v1.0</p>
+                    </div>
                   </div>
                 </div>
                 <NavLinks onClick={() => setIsMobileMenuOpen(false)} />
