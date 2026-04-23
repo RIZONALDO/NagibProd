@@ -44,7 +44,6 @@ import { ShootStatusBadge, ShootPriorityBadge, EquipmentStatusBadge, ShootOverdu
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { ShootForm, ShootFormValues } from "./form";
 import { TravelSection } from "./TravelSection";
 import { format, differenceInCalendarDays, parseISO } from "date-fns";
@@ -70,10 +69,8 @@ export default function ShootDetail() {
   const queryClient = useQueryClient();
   
   const [isEditing, setIsEditing] = useState(false);
-  const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
-  const [isEquipDialogOpen, setIsEquipDialogOpen] = useState(false);
 
-  // Form states for modals
+  // Inline add form states
   const [teamMemberId, setTeamMemberId] = useState<string>("");
   const [teamRole, setTeamRole] = useState<string>("");
   
@@ -91,9 +88,9 @@ export default function ShootDetail() {
 
   const { data: shoot, isLoading } = useGetShoot(id, { query: { enabled: !!id } });
   
-  // Queries for selectors
-  const { data: teamMembers } = useListTeamMembers({ status: "active" }, { query: { enabled: isTeamDialogOpen } });
-  const { data: equipments } = useListEquipment({ status: "available" }, { query: { enabled: isEquipDialogOpen } });
+  // Always load selectors — needed for inline forms
+  const { data: teamMembers } = useListTeamMembers({ status: "active" }, { query: { enabled: !isEditing } });
+  const { data: equipments } = useListEquipment({ status: "available" }, { query: { enabled: !isEditing } });
 
   const { isOperator } = useAuth();
 
@@ -179,7 +176,6 @@ export default function ShootDetail() {
       onSuccess: () => {
         toast({ title: "Membro adicionado" });
         queryClient.invalidateQueries({ queryKey: getGetShootQueryKey(id) });
-        setIsTeamDialogOpen(false);
         setTeamMemberId("");
         setTeamRole("");
       }
@@ -210,7 +206,6 @@ export default function ShootDetail() {
     }, {
       onSuccess: async (parentRow) => {
         queryClient.invalidateQueries({ queryKey: getGetShootQueryKey(id) });
-        setIsEquipDialogOpen(false);
         setEquipmentId("");
         setEquipQuantity("1");
 
@@ -553,60 +548,17 @@ export default function ShootDetail() {
             )}
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardHeader className="pb-2">
                 <CardTitle className="text-lg">Equipe Escalada</CardTitle>
-                <Dialog open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Plus className="h-4 w-4 mr-1" /> Adicionar
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Adicionar Membro à Equipe</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 pt-4">
-                      <div className="space-y-2">
-                        <Label>Membro</Label>
-                        <Select value={teamMemberId} onValueChange={setTeamMemberId}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um membro ativo" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {teamMembers?.map(tm => (
-                              <SelectItem key={tm.id} value={tm.id.toString()}>{tm.name} ({tm.primaryRole})</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Função na Gravação</Label>
-                        <Select value={teamRole} onValueChange={setTeamRole}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione a função" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {TEAM_ROLES.map(r => (
-                              <SelectItem key={r} value={r}>{r}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <Button onClick={handleAddTeamMember} className="w-full" disabled={addTeamMutation.isPending}>
-                        Adicionar
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
               </CardHeader>
               <CardContent>
                 {!shoot.team || shoot.team.length === 0 ? (
-                  <div className="text-center py-6 text-muted-foreground border border-dashed rounded-lg">
-                    <Users className="h-8 w-8 mx-auto mb-2 opacity-20" />
+                  <div className="text-center py-4 text-muted-foreground border border-dashed rounded-lg mb-3">
+                    <Users className="h-7 w-7 mx-auto mb-1.5 opacity-20" />
                     <p className="text-sm">Nenhum membro escalado</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-2 mb-3">
                     {shoot.team.map((member) => (
                       <div key={member.id} className="flex items-center justify-between p-3 border rounded-xl bg-card">
                         <div className="flex items-center gap-3">
@@ -631,6 +583,43 @@ export default function ShootDetail() {
                     ))}
                   </div>
                 )}
+
+                {/* Inline quick-add form */}
+                <div className="flex gap-2 items-center">
+                  <Select value={teamMemberId} onValueChange={setTeamMemberId}>
+                    <SelectTrigger className="flex-1 h-9 text-sm">
+                      <SelectValue placeholder="Membro..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(teamMembers ?? [])
+                        .filter(tm => !shoot.team?.some(t => t.teamMemberId === tm.id))
+                        .map(tm => (
+                          <SelectItem key={tm.id} value={tm.id.toString()}>
+                            {tm.name} <span className="text-muted-foreground text-xs">({tm.primaryRole})</span>
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={teamRole} onValueChange={setTeamRole}>
+                    <SelectTrigger className="w-36 h-9 text-sm">
+                      <SelectValue placeholder="Função..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TEAM_ROLES.map(r => (
+                        <SelectItem key={r} value={r}>{r}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    size="sm"
+                    className="h-9 px-3 shrink-0"
+                    onClick={handleAddTeamMember}
+                    disabled={addTeamMutation.isPending || !teamMemberId || !teamRole}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+
                 <div className="mt-4 pt-4 border-t">
                   <TravelSection
                     shootId={id}
@@ -651,49 +640,8 @@ export default function ShootDetail() {
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardHeader className="pb-2">
                 <CardTitle className="text-lg">Equipamentos Solicitados</CardTitle>
-                <Dialog open={isEquipDialogOpen} onOpenChange={setIsEquipDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Plus className="h-4 w-4 mr-1" /> Adicionar
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Adicionar Equipamento</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 pt-4">
-                      <div className="space-y-2">
-                        <Label>Equipamento</Label>
-                        <Select value={equipmentId} onValueChange={setEquipmentId}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um equipamento disponível" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {equipments?.map(eq => (
-                              <SelectItem key={eq.id} value={eq.id.toString()}>
-                                {eq.name} ({eq.availableQuantity} disp.)
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Quantidade</Label>
-                        <Input 
-                          type="number" 
-                          min="1" 
-                          value={equipQuantity} 
-                          onChange={e => setEquipQuantity(e.target.value)} 
-                        />
-                      </div>
-                      <Button onClick={handleAddEquipment} className="w-full" disabled={addEquipMutation.isPending}>
-                        Adicionar
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
               </CardHeader>
               <CardContent>
                 {!shoot.equipmentItems || shoot.equipmentItems.length === 0 ? (
@@ -780,8 +728,122 @@ export default function ShootDetail() {
                   </div>
                 )}
                 
+                {/* Inline quick-add equipment */}
+                <div className="mt-3 flex gap-2 items-center">
+                  <Select value={equipmentId} onValueChange={setEquipmentId}>
+                    <SelectTrigger className="flex-1 h-9 text-sm">
+                      <SelectValue placeholder="Equipamento..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(equipments ?? [])
+                        .filter(eq => !shoot.equipmentItems?.some(i => i.equipmentId === eq.id && !i.isLinkedItem))
+                        .map(eq => (
+                          <SelectItem key={eq.id} value={eq.id.toString()}>
+                            {eq.name} <span className="text-muted-foreground text-xs">({eq.availableQuantity} disp.)</span>
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={equipQuantity}
+                    onChange={e => setEquipQuantity(e.target.value)}
+                    className="w-16 h-9 text-center text-sm"
+                    placeholder="Qtd"
+                  />
+                  <Button
+                    size="sm"
+                    className="h-9 px-3 shrink-0"
+                    onClick={handleAddEquipment}
+                    disabled={addEquipMutation.isPending || !equipmentId}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* Inline linked items suggestion */}
+                {linkedSuggestion && (
+                  <div className="mt-3 rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium flex items-center gap-1.5">
+                        <Link2 className="h-4 w-4 text-primary" />
+                        Itens vinculados a <span className="text-primary">{linkedSuggestion.parentName}</span>
+                      </p>
+                      <button onClick={() => setLinkedSuggestion(null)} className="text-muted-foreground hover:text-foreground">
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Deseja adicionar junto?</p>
+
+                    <div className="space-y-1.5">
+                      {linkedSuggestion.items.map((optItem) => {
+                        const avail = optItem.link.linkedEquipment.availableQuantity;
+                        const unavailable = avail === 0;
+                        return (
+                          <div key={optItem.link.id} className={`flex items-center gap-2 ${unavailable ? "opacity-50" : ""}`}>
+                            <Checkbox
+                              checked={optItem.selected && !unavailable}
+                              disabled={unavailable}
+                              onCheckedChange={(checked) =>
+                                setLinkedSuggestion(prev => prev ? {
+                                  ...prev,
+                                  items: prev.items.map(it => it.link.id === optItem.link.id ? { ...it, selected: Boolean(checked) } : it)
+                                } : prev)
+                              }
+                            />
+                            <span className="text-sm flex-1 truncate">{optItem.link.linkedEquipment.name}</span>
+                            {optItem.required && (
+                              <span className="text-[10px] font-semibold bg-primary/15 text-primary px-1.5 py-0.5 rounded-full shrink-0">Obrigatório</span>
+                            )}
+                            {unavailable ? (
+                              <span className="text-xs text-red-500 shrink-0">Indisponível</span>
+                            ) : (
+                              <Input
+                                type="number"
+                                min="1"
+                                max={avail}
+                                disabled={!optItem.selected}
+                                value={optItem.quantity}
+                                onChange={(e) =>
+                                  setLinkedSuggestion(prev => prev ? {
+                                    ...prev,
+                                    items: prev.items.map(it =>
+                                      it.link.id === optItem.link.id ? { ...it, quantity: Math.max(1, parseInt(e.target.value) || 1) } : it
+                                    )
+                                  } : prev)
+                                }
+                                className="w-14 h-7 text-center text-xs shrink-0"
+                              />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="flex gap-2 pt-1">
+                      <Button
+                        size="sm"
+                        className="flex-1 h-8 text-xs"
+                        onClick={handleConfirmOptionalLinked}
+                        disabled={isAddingLinked || !linkedSuggestion.items.some(i => i.selected)}
+                      >
+                        {isAddingLinked ? "Adicionando..." : "Adicionar selecionados"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 text-xs text-muted-foreground"
+                        onClick={() => setLinkedSuggestion(null)}
+                      >
+                        Pular
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 {shoot.equipmentItems && shoot.equipmentItems.length > 0 && (
-                  <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                  <div className="mt-4 pt-4 border-t flex flex-col sm:flex-row gap-3">
                     <Link href={`/shoots/${shoot.id}/checkout`} className="flex-1">
                       <Button className="w-full" variant="outline">
                         Registrar Saída (Checkout)
@@ -904,145 +966,6 @@ export default function ShootDetail() {
         </div>
       </div>
 
-      {/* Linked items suggestion dialog (required + optional) */}
-      <Dialog open={!!linkedSuggestion} onOpenChange={(open) => { if (!open) setLinkedSuggestion(null); }}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Link2 className="h-5 w-5 text-primary" />
-              Itens vinculados a {linkedSuggestion?.parentName}
-            </DialogTitle>
-            <p className="text-sm text-muted-foreground pt-1">
-              Deseja adicionar os itens abaixo junto com este equipamento?
-            </p>
-          </DialogHeader>
-
-          <div className="py-1 space-y-2">
-            {linkedSuggestion?.items.some(i => i.required) && (
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Obrigatórios
-              </p>
-            )}
-            {linkedSuggestion?.items.filter(i => i.required).map((optItem, idx) => {
-              const avail = optItem.link.linkedEquipment.availableQuantity;
-              const unavailable = avail === 0;
-              return (
-                <div
-                  key={`req-${optItem.link.id}`}
-                  className={`flex items-center gap-3 p-3 rounded-xl border transition-colors border-primary/30 bg-primary/5 ${unavailable ? "opacity-60" : ""}`}
-                >
-                  <Checkbox
-                    checked={optItem.selected && !unavailable}
-                    disabled={unavailable}
-                    onCheckedChange={(checked) =>
-                      setLinkedSuggestion(prev => prev ? {
-                        ...prev,
-                        items: prev.items.map((it) => it.link.id === optItem.link.id ? { ...it, selected: Boolean(checked) } : it)
-                      } : prev)
-                    }
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <p className="text-sm font-medium truncate">{optItem.link.linkedEquipment.name}</p>
-                      <span className="text-[10px] font-semibold bg-primary/15 text-primary px-1.5 py-0.5 rounded-full shrink-0">Obrigatório</span>
-                    </div>
-                    <p className={`text-xs ${unavailable ? "text-red-500" : "text-muted-foreground"}`}>
-                      {unavailable ? "Indisponível no estoque" : `${avail} disponível(is)`}
-                    </p>
-                    {optItem.link.notes && (
-                      <p className="text-xs text-muted-foreground/70 italic mt-0.5">{optItem.link.notes}</p>
-                    )}
-                  </div>
-                  <Input
-                    type="number"
-                    min="1"
-                    max={avail > 0 ? avail : 99}
-                    disabled={unavailable || !optItem.selected}
-                    value={optItem.quantity}
-                    onChange={(e) =>
-                      setLinkedSuggestion(prev => prev ? {
-                        ...prev,
-                        items: prev.items.map((it) =>
-                          it.link.id === optItem.link.id ? { ...it, quantity: Math.max(1, parseInt(e.target.value) || 1) } : it
-                        )
-                      } : prev)
-                    }
-                    className="w-16 h-8 text-center text-sm shrink-0"
-                  />
-                  {unavailable && <AlertTriangle className="h-4 w-4 text-red-500 shrink-0" />}
-                </div>
-              );
-            })}
-
-            {linkedSuggestion?.items.some(i => !i.required) && (
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide pt-1">
-                Opcionais
-              </p>
-            )}
-            {linkedSuggestion?.items.filter(i => !i.required).map((optItem) => {
-              const avail = optItem.link.linkedEquipment.availableQuantity;
-              const unavailable = avail === 0;
-              return (
-                <div
-                  key={`opt-${optItem.link.id}`}
-                  className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${
-                    optItem.selected ? "border-border bg-muted/30" : "border-border bg-muted/10"
-                  } ${unavailable ? "opacity-60" : ""}`}
-                >
-                  <Checkbox
-                    checked={optItem.selected && !unavailable}
-                    disabled={unavailable}
-                    onCheckedChange={(checked) =>
-                      setLinkedSuggestion(prev => prev ? {
-                        ...prev,
-                        items: prev.items.map((it) => it.link.id === optItem.link.id ? { ...it, selected: Boolean(checked) } : it)
-                      } : prev)
-                    }
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{optItem.link.linkedEquipment.name}</p>
-                    <p className={`text-xs ${unavailable ? "text-red-500" : "text-muted-foreground"}`}>
-                      {unavailable ? "Indisponível no estoque" : `${avail} disponível(is)`}
-                    </p>
-                    {optItem.link.notes && (
-                      <p className="text-xs text-muted-foreground/70 italic mt-0.5">{optItem.link.notes}</p>
-                    )}
-                  </div>
-                  <Input
-                    type="number"
-                    min="1"
-                    max={avail > 0 ? avail : 99}
-                    disabled={unavailable || !optItem.selected}
-                    value={optItem.quantity}
-                    onChange={(e) =>
-                      setLinkedSuggestion(prev => prev ? {
-                        ...prev,
-                        items: prev.items.map((it) =>
-                          it.link.id === optItem.link.id ? { ...it, quantity: Math.max(1, parseInt(e.target.value) || 1) } : it
-                        )
-                      } : prev)
-                    }
-                    className="w-16 h-8 text-center text-sm shrink-0"
-                  />
-                  {unavailable && <AlertTriangle className="h-4 w-4 text-red-500 shrink-0" />}
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setLinkedSuggestion(null)}>
-              Não adicionar
-            </Button>
-            <Button
-              onClick={handleConfirmOptionalLinked}
-              disabled={isAddingLinked || !linkedSuggestion?.items.some(i => i.selected)}
-            >
-              {isAddingLinked ? "Adicionando..." : "Adicionar selecionados"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </Shell>
   );
 }
