@@ -27,8 +27,8 @@ export default function ShootsList() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Diárias</h1>
-            <p className="text-muted-foreground">Gerencie as gravações e produções.</p>
+            <h1 className="text-3xl font-bold tracking-tight">Pautas</h1>
+            <p className="text-muted-foreground">Gerencie as pautas e produções.</p>
           </div>
           <div className="flex gap-2">
             <Link href="/reports/diarias">
@@ -74,7 +74,7 @@ export default function ShootsList() {
         ) : shoots?.length === 0 ? (
           <div className="text-center py-12 border rounded-lg bg-card text-muted-foreground">
             <Video className="h-12 w-12 mx-auto mb-4 opacity-20" />
-            <h3 className="text-lg font-medium">Nenhuma diária encontrada</h3>
+            <h3 className="text-lg font-medium">Nenhuma pauta encontrada</h3>
             <p>Tente ajustar os filtros de busca.</p>
           </div>
         ) : (
@@ -100,7 +100,10 @@ export default function ShootsList() {
                     <div className="flex items-center text-sm text-muted-foreground gap-2">
                       <CalendarIcon className="h-4 w-4 shrink-0" />
                       <span>
-                        {format(new Date(shoot.date), "dd 'de' MMMM", { locale: ptBR })}
+                        {format(new Date(shoot.date + "T12:00:00"), "dd 'de' MMMM", { locale: ptBR })}
+                        {(shoot as { endDate?: string | null }).endDate && (
+                          <> → {format(new Date((shoot as { endDate: string }).endDate + "T12:00:00"), "dd 'de' MMMM", { locale: ptBR })}</>
+                        )}
                         {shoot.time ? ` às ${shoot.time}` : ""}
                       </span>
                     </div>

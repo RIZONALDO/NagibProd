@@ -11,7 +11,7 @@ import { Loader2, Save, RotateCcw, Eye } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const PLACEHOLDERS = [
-  { key: "{data}", desc: "Data da diária" },
+  { key: "{data}", desc: "Data da pauta" },
   { key: "{horario}", desc: "Horário" },
   { key: "{local}", desc: "Local" },
   { key: "{resumo}", desc: "Resumo/Pauta" },

@@ -58,20 +58,20 @@ export default function Dashboard() {
             </p>
           </div>
           <Link href="/shoots/new" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2">
-            Nova Diária
+            Nova Pauta
           </Link>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Diárias Hoje</CardTitle>
+              <CardTitle className="text-sm font-medium">Pautas Hoje</CardTitle>
               <Video className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{summary.todayShoots}</div>
               <p className="text-xs text-muted-foreground">
-                {summary.openShoots} diárias em andamento total
+                {summary.openShoots} pautas em andamento total
               </p>
             </CardContent>
           </Card>
@@ -128,7 +128,7 @@ export default function Dashboard() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
           <Card className="lg:col-span-4">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Diárias de Hoje</CardTitle>
+              <CardTitle>Pautas de Hoje</CardTitle>
               <Link href="/shoots" className="text-sm text-primary hover:underline flex items-center gap-1">
                 Ver todas <ArrowRight className="h-3 w-3" />
               </Link>
@@ -137,7 +137,7 @@ export default function Dashboard() {
               {summary.todayShootsList.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Video className="h-8 w-8 mx-auto mb-3 opacity-20" />
-                  <p>Nenhuma diária programada para hoje.</p>
+                  <p>Nenhuma pauta programada para hoje.</p>
                 </div>
               ) : (
                 <div className="space-y-4">

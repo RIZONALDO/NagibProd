@@ -203,7 +203,7 @@ export default function CalendarPage() {
                 className="h-8 rounded-xl font-semibold shadow-sm"
                 onClick={() => navigate("/shoots/new")}
               >
-                + Nova Diária
+                + Nova Pauta
               </Button>
             </div>
           </div>
@@ -213,7 +213,7 @@ export default function CalendarPage() {
             <div className="relative flex-1 min-w-[180px] max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <Input
-                placeholder="Buscar diária, local, cliente..."
+                placeholder="Buscar pauta, local, cliente..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9 h-9 text-sm rounded-xl border-muted bg-muted/50 focus-visible:bg-background"
@@ -308,7 +308,7 @@ export default function CalendarPage() {
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-muted-foreground">Local</label>
                   <Input
-                    placeholder="Local da diária"
+                    placeholder="Local da pauta"
                     value={filters.location ?? ""}
                     onChange={(e) => setFilter("location", e.target.value)}
                     className="h-8 text-sm"

@@ -5,6 +5,7 @@ import { z } from "zod/v4";
 export const shootsTable = pgTable("shoots", {
   id: serial("id").primaryKey(),
   date: text("date").notNull(),
+  endDate: text("end_date"),
   time: text("time"),
   location: text("location").notNull(),
   briefing: text("briefing"),

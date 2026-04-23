@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { SHOOT_PRIORITY_LABELS, SHOOT_STATUS_LABELS } from "@/lib/constants";
 
 const shootSchema = z.object({
-  date: z.string().min(1, "Data é obrigatória"),
+  date: z.string().min(1, "Data de início é obrigatória"),
+  endDate: z.string().optional().nullable(),
   time: z.string().optional().nullable(),
   location: z.string().min(2, "Local é obrigatório"),
   briefing: z.string().optional().nullable(),
@@ -29,15 +30,19 @@ interface ShootFormProps {
 }
 
 export function ShootForm({ defaultValues, onSubmit, isSubmitting }: ShootFormProps) {
-  // Extract just the date part (YYYY-MM-DD) if it's a full ISO string
-  const formattedDate = defaultValues?.date 
-    ? defaultValues.date.split('T')[0] 
+  const formattedDate = defaultValues?.date
+    ? defaultValues.date.split('T')[0]
     : new Date().toISOString().split('T')[0];
+
+  const formattedEndDate = defaultValues?.endDate
+    ? defaultValues.endDate.split('T')[0]
+    : "";
 
   const form = useForm<ShootFormValues>({
     resolver: zodResolver(shootSchema),
     defaultValues: {
       date: formattedDate,
+      endDate: formattedEndDate || "",
       time: defaultValues?.time || "",
       location: defaultValues?.location || "",
       briefing: defaultValues?.briefing || "",
@@ -53,14 +58,29 @@ export function ShootForm({ defaultValues, onSubmit, isSubmitting }: ShootFormPr
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid gap-6 md:grid-cols-2">
+          {/* Período */}
           <FormField
             control={form.control}
             name="date"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Data</FormLabel>
+                <FormLabel>Data de Início</FormLabel>
                 <FormControl>
                   <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="endDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Data de Término <span className="text-muted-foreground font-normal">(opcional)</span></FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} value={field.value || ""} min={form.watch("date") || undefined} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -72,7 +92,7 @@ export function ShootForm({ defaultValues, onSubmit, isSubmitting }: ShootFormPr
             name="time"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Horário (Opcional)</FormLabel>
+                <FormLabel>Horário <span className="text-muted-foreground font-normal">(opcional)</span></FormLabel>
                 <FormControl>
                   <Input type="time" {...field} value={field.value || ""} />
                 </FormControl>
@@ -85,7 +105,7 @@ export function ShootForm({ defaultValues, onSubmit, isSubmitting }: ShootFormPr
             control={form.control}
             name="location"
             render={({ field }) => (
-              <FormItem className="md:col-span-2">
+              <FormItem>
                 <FormLabel>Local da Gravação</FormLabel>
                 <FormControl>
                   <Input placeholder="Endereço ou local" {...field} />
@@ -177,11 +197,11 @@ export function ShootForm({ defaultValues, onSubmit, isSubmitting }: ShootFormPr
             <FormItem>
               <FormLabel>Resumo para WhatsApp (Pauta)</FormLabel>
               <FormControl>
-                <Textarea 
-                  placeholder="Este texto aparecerá no espelho da pauta enviado no WhatsApp..." 
+                <Textarea
+                  placeholder="Este texto aparecerá no espelho da pauta enviado no WhatsApp..."
                   className="min-h-[80px]"
-                  {...field} 
-                  value={field.value || ""} 
+                  {...field}
+                  value={field.value || ""}
                 />
               </FormControl>
               <FormMessage />
@@ -196,11 +216,11 @@ export function ShootForm({ defaultValues, onSubmit, isSubmitting }: ShootFormPr
             <FormItem>
               <FormLabel>Briefing Interno / Detalhes</FormLabel>
               <FormControl>
-                <Textarea 
-                  placeholder="Informações completas de produção, referências, etc..." 
+                <Textarea
+                  placeholder="Informações completas de produção, referências, etc..."
                   className="min-h-[120px]"
-                  {...field} 
-                  value={field.value || ""} 
+                  {...field}
+                  value={field.value || ""}
                 />
               </FormControl>
               <FormMessage />

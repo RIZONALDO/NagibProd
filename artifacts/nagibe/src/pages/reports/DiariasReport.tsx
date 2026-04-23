@@ -84,9 +84,9 @@ export default function DiariasReport() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
               <FileBarChart2 className="h-6 w-6 text-primary" />
-              Relatório de Diárias
+              Relatório de Pautas
             </h1>
-            <p className="text-muted-foreground text-sm">Diárias trabalhadas e de deslocamento por período</p>
+            <p className="text-muted-foreground text-sm">Pautas e diárias de deslocamento por período</p>
           </div>
         </div>
 

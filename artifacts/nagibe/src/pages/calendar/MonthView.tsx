@@ -100,7 +100,7 @@ export default function MonthView({ currentDate, shoots, onShootClick, onDayClic
                       : "text-muted-foreground/40",
                   )}
                   onClick={() => onDayClick(day)}
-                  title={`Nova diária em ${format(day, "dd/MM/yyyy")}`}
+                  title={`Nova pauta em ${format(day, "dd/MM/yyyy")}`}
                 >
                   {format(day, "d")}
                 </button>
@@ -110,7 +110,7 @@ export default function MonthView({ currentDate, shoots, onShootClick, onDayClic
                   <button
                     onClick={() => onDayClick(day)}
                     className="hidden md:flex opacity-0 group-hover:opacity-100 w-5 h-5 items-center justify-center rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all"
-                    title="Nova diária"
+                    title="Nova pauta"
                   >
                     <Plus className="h-3 w-3" />
                   </button>

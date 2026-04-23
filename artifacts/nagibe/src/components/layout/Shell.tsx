@@ -33,7 +33,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/shoots", label: "Diárias", icon: Video },
+  { href: "/shoots", label: "Pautas", icon: Video },
   { href: "/calendar", label: "Calendário", icon: CalendarDays },
   { href: "/team", label: "Equipe", icon: Users },
   { href: "/equipment", label: "Equipamentos", icon: Camera },

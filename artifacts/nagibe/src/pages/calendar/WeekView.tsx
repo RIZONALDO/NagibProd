@@ -74,7 +74,7 @@ export default function WeekView({ currentDate, shoots, onShootClick, onDayClick
                 </div>
                 {dayShoots.length > 0 && (
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    {dayShoots.length} diária{dayShoots.length !== 1 ? "s" : ""}
+                    {dayShoots.length} pauta{dayShoots.length !== 1 ? "s" : ""}
                   </p>
                 )}
               </div>
@@ -86,7 +86,7 @@ export default function WeekView({ currentDate, shoots, onShootClick, onDayClick
                 ))}
                 {dayShoots.length === 0 && (
                   <div className="h-full flex items-center justify-center py-8">
-                    <p className="text-xs text-muted-foreground/40 text-center">Sem diárias</p>
+                    <p className="text-xs text-muted-foreground/40 text-center">Sem pautas</p>
                   </div>
                 )}
               </div>
@@ -97,7 +97,7 @@ export default function WeekView({ currentDate, shoots, onShootClick, onDayClick
                 className="shrink-0 flex items-center justify-center gap-1.5 py-2.5 border-t text-xs text-muted-foreground/60 hover:text-primary hover:bg-primary/5 transition-colors"
               >
                 <Plus className="h-3.5 w-3.5" />
-                Nova diária
+                Nova pauta
               </button>
             </div>
           );
@@ -137,8 +137,8 @@ export default function WeekView({ currentDate, shoots, onShootClick, onDayClick
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {dayShoots.length > 0
-                        ? `${dayShoots.length} diária${dayShoots.length !== 1 ? "s" : ""}`
-                        : "Sem diárias"}
+                        ? `${dayShoots.length} pauta${dayShoots.length !== 1 ? "s" : ""}`
+                        : "Sem pautas"}
                     </p>
                   </div>
                 </div>

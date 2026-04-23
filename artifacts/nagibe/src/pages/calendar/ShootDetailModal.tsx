@@ -230,7 +230,7 @@ export default function ShootDetailModal({ shoot, onClose }: Props) {
             Fechar
           </Button>
           <Button onClick={() => { onClose(); navigate(`/shoots/${shoot.id}`); }}>
-            Abrir Diária
+            Abrir Pauta
             <ExternalLink className="ml-2 h-4 w-4" />
           </Button>
         </div>

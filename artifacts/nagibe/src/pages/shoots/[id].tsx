@@ -90,7 +90,7 @@ export default function ShootDetail() {
   const handleUpdate = (data: ShootFormValues) => {
     updateMutation.mutate({ id, data }, {
       onSuccess: () => {
-        toast({ title: "Diária atualizada com sucesso" });
+        toast({ title: "Pauta atualizada com sucesso" });
         queryClient.invalidateQueries({ queryKey: getGetShootQueryKey(id) });
         queryClient.invalidateQueries({ queryKey: getListShootsQueryKey() });
         setIsEditing(false);
@@ -104,7 +104,7 @@ export default function ShootDetail() {
   const handleDelete = () => {
     deleteMutation.mutate({ id }, {
       onSuccess: () => {
-        toast({ title: "Diária removida com sucesso" });
+        toast({ title: "Pauta removida com sucesso" });
         queryClient.invalidateQueries({ queryKey: getListShootsQueryKey() });
         setLocation("/shoots");
       },
@@ -342,7 +342,7 @@ export default function ShootDetail() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Editar Diária</h1>
+              <h1 className="text-3xl font-bold tracking-tight">Editar Pauta</h1>
               <p className="text-muted-foreground">{shoot.location}</p>
             </div>
           </div>
@@ -356,7 +356,11 @@ export default function ShootDetail() {
     );
   }
 
-  const formattedDate = format(new Date(shoot.date), "dd 'de' MMMM, yyyy", { locale: ptBR });
+  const shootEndDate = (shoot as { endDate?: string | null }).endDate;
+  const formattedDate = format(new Date(shoot.date + "T12:00:00"), "dd 'de' MMMM, yyyy", { locale: ptBR });
+  const formattedEndDate = shootEndDate
+    ? format(new Date(shootEndDate + "T12:00:00"), "dd 'de' MMMM, yyyy", { locale: ptBR })
+    : null;
 
   return (
     <Shell>
@@ -390,7 +394,7 @@ export default function ShootDetail() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Esta ação removerá a diária permanentemente. Os equipamentos voltarão ao status disponível se não houver checkout ativo.
+                    Esta ação removerá a pauta permanentemente. Os equipamentos voltarão ao status disponível se não houver checkout ativo.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -414,8 +418,13 @@ export default function ShootDetail() {
                 <div className="flex items-start gap-3">
                   <Calendar className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium">Data</p>
-                    <p className="text-sm text-muted-foreground">{formattedDate}</p>
+                    <p className="text-sm font-medium">{formattedEndDate ? "Período" : "Data"}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {formattedDate}
+                      {formattedEndDate && (
+                        <span> → {formattedEndDate}</span>
+                      )}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">

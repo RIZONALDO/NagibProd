@@ -160,7 +160,7 @@ export function LinkedItemsSection({ equipmentId, equipmentName }: LinkedItemsSe
             <div>
               <CardTitle>Itens Vinculados</CardTitle>
               <CardDescription className="mt-0.5">
-                Itens que normalmente acompanham <strong>{equipmentName}</strong> nas diárias
+                Itens que normalmente acompanham <strong>{equipmentName}</strong> nas pautas
               </CardDescription>
             </div>
           </div>
@@ -367,7 +367,7 @@ export function LinkedItemsSection({ equipmentId, equipmentName }: LinkedItemsSe
 
             {form.required && (
               <p className="text-xs text-primary bg-primary/5 rounded-lg px-3 py-2 border border-primary/20">
-                Itens obrigatórios são adicionados automaticamente quando este equipamento é incluído numa diária.
+                Itens obrigatórios são adicionados automaticamente quando este equipamento é incluído numa pauta.
               </p>
             )}
           </div>

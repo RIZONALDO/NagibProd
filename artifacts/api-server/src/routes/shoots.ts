@@ -99,6 +99,7 @@ router.post("/shoots", async (req, res): Promise<void> => {
 
   const [shoot] = await db.insert(shootsTable).values({
     date: parsed.data.date,
+    endDate: (req.body.endDate && typeof req.body.endDate === "string") ? req.body.endDate : null,
     time: parsed.data.time ?? null,
     location: parsed.data.location,
     briefing: parsed.data.briefing ?? null,
@@ -111,7 +112,7 @@ router.post("/shoots", async (req, res): Promise<void> => {
 
   await db.insert(activityLogsTable).values({
     type: "shoot_created",
-    description: `Diária em ${shoot.location} em ${shoot.date} criada`,
+    description: `Pauta em ${shoot.location} em ${shoot.date} criada`,
     shootId: shoot.id,
   });
 
@@ -268,6 +269,8 @@ router.patch("/shoots/:id", async (req, res): Promise<void> => {
   if (parsed.data.priority !== undefined) updateData.priority = parsed.data.priority;
   if (parsed.data.status !== undefined) updateData.status = parsed.data.status;
   if (typeof req.body.hasTravel === "boolean") updateData.hasTravel = req.body.hasTravel;
+  if (req.body.endDate !== undefined) updateData.endDate = req.body.endDate || null;
+  if (parsed.data.date !== undefined) updateData.date = parsed.data.date;
 
   const [shoot] = await db
     .update(shootsTable)
@@ -282,7 +285,7 @@ router.patch("/shoots/:id", async (req, res): Promise<void> => {
 
   await db.insert(activityLogsTable).values({
     type: "shoot_updated",
-    description: `Diária em ${shoot.location} atualizada`,
+    description: `Pauta em ${shoot.location} atualizada`,
     shootId: shoot.id,
   });
 
@@ -363,7 +366,7 @@ router.post("/shoots/:id/team", async (req, res): Promise<void> => {
 
   await db.insert(activityLogsTable).values({
     type: "team_added_to_shoot",
-    description: `${member?.name ?? "Membro"} adicionado à diária`,
+    description: `${member?.name ?? "Membro"} adicionado à pauta`,
     shootId: params.data.id,
     teamMemberId: row.teamMemberId,
   });
@@ -522,7 +525,7 @@ router.post("/shoots/:id/equipment", async (req, res): Promise<void> => {
 
   await db.insert(activityLogsTable).values({
     type: "equipment_added_to_shoot",
-    description: `${equip?.name ?? "Equipamento"} adicionado à diária${isLinkedItem ? " (item vinculado)" : ""}`,
+    description: `${equip?.name ?? "Equipamento"} adicionado à pauta${isLinkedItem ? " (item vinculado)" : ""}`,
     shootId: params.data.id,
     equipmentId: row.equipmentId,
   });
@@ -656,7 +659,7 @@ router.post("/shoots/:id/checkout", async (req, res): Promise<void> => {
 
   await db.insert(activityLogsTable).values({
     type: "checkout",
-    description: `Saída de equipamentos registrada para diária`,
+    description: `Saída de equipamentos registrada para pauta`,
     shootId: params.data.id,
   });
 
@@ -864,7 +867,7 @@ router.get("/shoots/:id/return-details", async (req, res): Promise<void> => {
   });
 });
 
-// ── Diárias Report ──
+// ── Pautas Report ──
 router.get("/reports/diarias", async (req, res): Promise<void> => {
   const from = String(req.query.from ?? "");
   const to = String(req.query.to ?? "");

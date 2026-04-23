@@ -17,7 +17,7 @@ export default function NewShoot() {
   const handleSubmit = (data: ShootFormValues) => {
     createMutation.mutate({ data }, {
       onSuccess: (newShoot) => {
-        toast({ title: "Diária criada com sucesso" });
+        toast({ title: "Pauta criada com sucesso" });
         queryClient.invalidateQueries({ queryKey: getListShootsQueryKey() });
         setLocation(`/shoots/${newShoot.id}`);
       },
@@ -35,8 +35,8 @@ export default function NewShoot() {
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Nova Diária</h1>
-            <p className="text-muted-foreground">Programe uma nova gravação.</p>
+            <h1 className="text-3xl font-bold tracking-tight">Nova Pauta</h1>
+            <p className="text-muted-foreground">Programe uma nova pauta de gravação.</p>
           </div>
         </div>
 
