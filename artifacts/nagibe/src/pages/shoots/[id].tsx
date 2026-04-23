@@ -3,7 +3,8 @@ import { Shell } from "@/components/layout/Shell";
 import { getEquipmentLinks, type EquipmentLink } from "@/lib/equipment-links-api";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Link2, AlertTriangle } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Link2, AlertTriangle, PackageCheck, PackageX, ClipboardList, CheckCircle2 } from "lucide-react";
 import { 
   useGetShoot, 
   useUpdateShoot,
@@ -80,12 +81,27 @@ export default function ShootDetail() {
   const { data: teamMembers } = useListTeamMembers({ status: "active" }, { query: { enabled: isTeamDialogOpen } });
   const { data: equipments } = useListEquipment({ status: "available" }, { query: { enabled: isEquipDialogOpen } });
 
+  const { isOperator } = useAuth();
+
   const updateMutation = useUpdateShoot();
   const deleteMutation = useDeleteShoot();
   const addTeamMutation = useAddShootTeamMember();
   const removeTeamMutation = useRemoveShootTeamMember();
   const addEquipMutation = useAddShootEquipment();
   const removeEquipMutation = useRemoveShootEquipment();
+
+  const handleFinalizeShoot = () => {
+    updateMutation.mutate({ id, data: { status: "closed" } }, {
+      onSuccess: () => {
+        toast({ title: "Pauta finalizada com sucesso!" });
+        queryClient.invalidateQueries({ queryKey: getGetShootQueryKey(id) });
+        queryClient.invalidateQueries({ queryKey: getListShootsQueryKey() });
+      },
+      onError: (err) => {
+        toast({ title: "Erro ao finalizar pauta", description: String(err), variant: "destructive" });
+      }
+    });
+  };
 
   const handleUpdate = (data: ShootFormValues) => {
     updateMutation.mutate({ id, data }, {
@@ -380,6 +396,15 @@ export default function ShootDetail() {
           </div>
           
           <div className="flex items-center gap-2">
+            {isOperator && shoot.status !== "closed" && (
+              <Button
+                className="bg-green-600 hover:bg-green-700 text-white"
+                onClick={handleFinalizeShoot}
+                disabled={updateMutation.isPending}
+              >
+                <CheckCircle2 className="h-4 w-4 mr-2" /> Pauta Finalizada
+              </Button>
+            )}
             <Button variant="outline" onClick={() => setIsEditing(true)}>
               <Edit className="h-4 w-4 mr-2" /> Editar
             </Button>
@@ -620,9 +645,16 @@ export default function ShootDetail() {
                         <div key={item.id}>
                           {/* Parent row */}
                           <div className="flex items-center justify-between p-3 border rounded-xl bg-card">
-                            <div className="flex flex-col">
+                            <div className="flex flex-col gap-1">
                               <p className="font-medium text-sm">{item.equipment?.name}</p>
-                              <p className="text-xs text-muted-foreground">Quantidade: {item.quantity}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-xs text-muted-foreground">Quantidade: {item.quantity}</p>
+                                {shoot.checkout && (
+                                  <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs px-1.5 py-0.5 rounded-full font-medium">
+                                    <PackageCheck className="h-3 w-3" /> Saída
+                                  </span>
+                                )}
+                              </div>
                             </div>
                             <Button 
                               variant="ghost" 
@@ -724,39 +756,67 @@ export default function ShootDetail() {
               </CardContent>
             </Card>
 
-            {(shoot.checkout || shoot.return) && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Status Logístico</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {shoot.checkout && (
-                    <div className="border-l-2 border-primary pl-3 py-1">
-                      <p className="text-sm font-medium">Checkout Realizado</p>
-                      <p className="text-xs text-muted-foreground mb-1">
-                        {format(new Date(shoot.checkout.checkoutAt), "dd/MM/yyyy HH:mm")}
-                      </p>
-                      <p className="text-xs">Entregue por: {shoot.checkout.deliveredBy}</p>
-                      <p className="text-xs">Recebido por: {shoot.checkout.receivedBy}</p>
+            {/* Planejado card — always visible */}
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-semibold">Planejado</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <ShootStatusBadge status={shoot.status} />
+                  <ShootPriorityBadge priority={shoot.priority} />
+                </div>
+                <p className="text-xs text-muted-foreground">{formattedDate}</p>
+                <p className="text-xs text-muted-foreground truncate">{shoot.location}</p>
+              </CardContent>
+            </Card>
+
+            {/* Saída card — always visible */}
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <PackageCheck className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-semibold">Saída</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {shoot.checkout ? (
+                  <div className="space-y-2">
+                    <div className="inline-flex items-center gap-1.5 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs px-2 py-1 rounded-full font-medium">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Checkout realizado
                     </div>
-                  )}
-                  
-                  {shoot.return && (
-                    <div className="border-l-2 border-green-500 pl-3 py-1">
-                      <p className="text-sm font-medium">Devolução Realizada</p>
-                      <p className="text-xs text-muted-foreground mb-1">
-                        {format(new Date(shoot.return.returnAt), "dd/MM/yyyy HH:mm")}
-                      </p>
-                      <p className="text-xs">Devolvido por: {shoot.return.returnedBy}</p>
-                      <p className="text-xs">Recebido por: {shoot.return.receivedBy}</p>
-                      {shoot.return.hasPendencies && (
-                        <p className="text-xs font-medium text-destructive mt-1">Com pendências/danos</p>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+                    <p className="text-xs text-muted-foreground">
+                      {format(new Date(shoot.checkout.checkoutAt), "dd/MM/yyyy HH:mm")}
+                    </p>
+                    <p className="text-xs">Entregue por: <span className="font-medium">{shoot.checkout.deliveredBy}</span></p>
+                    <p className="text-xs">Recebido por: <span className="font-medium">{shoot.checkout.receivedBy}</span></p>
+                    {shoot.return && (
+                      <div className="mt-2 border-t pt-2 space-y-1">
+                        <div className="inline-flex items-center gap-1.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs px-2 py-1 rounded-full font-medium">
+                          <CheckCircle2 className="h-3.5 w-3.5" /> Devolução realizada
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(shoot.return.returnAt), "dd/MM/yyyy HH:mm")}
+                        </p>
+                        <p className="text-xs">Devolvido por: <span className="font-medium">{shoot.return.returnedBy}</span></p>
+                        <p className="text-xs">Recebido por: <span className="font-medium">{shoot.return.receivedBy}</span></p>
+                        {shoot.return.hasPendencies && (
+                          <p className="text-xs font-medium text-destructive">Com pendências/danos</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-4 gap-2">
+                    <PackageX className="h-8 w-8 text-muted-foreground/30" />
+                    <p className="text-xs text-muted-foreground">Aguardando saída</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
