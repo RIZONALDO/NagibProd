@@ -67,35 +67,34 @@ export const STATUS_LABELS: Record<string, string> = {
   closed: "Fechado",
 };
 
+/* Solid dot color (for small indicators) */
 export const STATUS_COLORS: Record<string, string> = {
   planned: "bg-blue-500",
-  team_defined: "bg-purple-500",
+  team_defined: "bg-violet-500",
   equipment_separated: "bg-indigo-500",
   checkout_done: "bg-amber-500",
-  in_progress: "bg-green-500",
+  in_progress: "bg-emerald-500",
   return_pending: "bg-orange-500",
-  closed: "bg-gray-400",
+  closed: "bg-slate-400",
 };
 
-export const STATUS_BG: Record<string, string> = {
-  planned: "bg-blue-50 border-blue-200",
-  team_defined: "bg-purple-50 border-purple-200",
-  equipment_separated: "bg-indigo-50 border-indigo-200",
-  checkout_done: "bg-amber-50 border-amber-200",
-  in_progress: "bg-green-50 border-green-200",
-  return_pending: "bg-orange-50 border-orange-200",
-  closed: "bg-gray-50 border-gray-200",
+/* Card tint: background + border + text */
+export const STATUS_CARD: Record<string, { bg: string; border: string; text: string; dot: string }> = {
+  planned:            { bg: "bg-blue-50 dark:bg-blue-950/40",     border: "border-blue-200 dark:border-blue-800",    text: "text-blue-800 dark:text-blue-200",    dot: "bg-blue-500"    },
+  team_defined:       { bg: "bg-violet-50 dark:bg-violet-950/40", border: "border-violet-200 dark:border-violet-800",text: "text-violet-800 dark:text-violet-200", dot: "bg-violet-500"  },
+  equipment_separated:{ bg: "bg-indigo-50 dark:bg-indigo-950/40", border: "border-indigo-200 dark:border-indigo-800",text: "text-indigo-800 dark:text-indigo-200", dot: "bg-indigo-500"  },
+  checkout_done:      { bg: "bg-amber-50 dark:bg-amber-950/40",   border: "border-amber-200 dark:border-amber-800",  text: "text-amber-800 dark:text-amber-200",  dot: "bg-amber-500"   },
+  in_progress:        { bg: "bg-emerald-50 dark:bg-emerald-950/40",border: "border-emerald-200 dark:border-emerald-800",text: "text-emerald-800 dark:text-emerald-200",dot: "bg-emerald-500"},
+  return_pending:     { bg: "bg-orange-50 dark:bg-orange-950/40", border: "border-orange-200 dark:border-orange-800",text: "text-orange-800 dark:text-orange-200", dot: "bg-orange-500"  },
+  closed:             { bg: "bg-slate-100 dark:bg-slate-800/40",  border: "border-slate-200 dark:border-slate-700",  text: "text-slate-600 dark:text-slate-400",  dot: "bg-slate-400"   },
 };
 
-export const STATUS_TEXT: Record<string, string> = {
-  planned: "text-blue-700",
-  team_defined: "text-purple-700",
-  equipment_separated: "text-indigo-700",
-  checkout_done: "text-amber-700",
-  in_progress: "text-green-700",
-  return_pending: "text-orange-700",
-  closed: "text-gray-600",
-};
+export const STATUS_BG: Record<string, string> = Object.fromEntries(
+  Object.entries(STATUS_CARD).map(([k, v]) => [k, `${v.bg} border ${v.border}`]),
+);
+export const STATUS_TEXT: Record<string, string> = Object.fromEntries(
+  Object.entries(STATUS_CARD).map(([k, v]) => [k, v.text]),
+);
 
 export const PRIORITY_LABELS: Record<string, string> = {
   low: "Baixa",
@@ -105,8 +104,8 @@ export const PRIORITY_LABELS: Record<string, string> = {
 };
 
 export const PRIORITY_COLORS: Record<string, string> = {
-  low: "text-green-700 bg-green-100 border-green-200",
-  medium: "text-blue-700 bg-blue-100 border-blue-200",
-  high: "text-amber-700 bg-amber-100 border-amber-200",
-  urgent: "text-red-700 bg-red-100 border-red-200",
+  low:    "text-emerald-700 bg-emerald-100 border-emerald-200 dark:text-emerald-300 dark:bg-emerald-900/40 dark:border-emerald-800",
+  medium: "text-blue-700 bg-blue-100 border-blue-200 dark:text-blue-300 dark:bg-blue-900/40 dark:border-blue-800",
+  high:   "text-amber-700 bg-amber-100 border-amber-200 dark:text-amber-300 dark:bg-amber-900/40 dark:border-amber-800",
+  urgent: "text-red-700 bg-red-100 border-red-200 dark:text-red-300 dark:bg-red-900/40 dark:border-red-800",
 };

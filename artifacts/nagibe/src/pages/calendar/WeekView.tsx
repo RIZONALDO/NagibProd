@@ -5,8 +5,6 @@ import {
   eachDayOfInterval,
   format,
   isToday,
-  isSameDay,
-  parseISO,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Plus } from "lucide-react";
@@ -33,14 +31,13 @@ export default function WeekView({ currentDate, shoots, onShootClick, onDayClick
       if (!shootsByDay.has(d)) shootsByDay.set(d, []);
       shootsByDay.get(d)!.push(shoot);
     }
-
     return { days, shootsByDay };
   }, [currentDate, shoots]);
 
   return (
-    <div className="flex-1 min-h-0 overflow-auto">
-      {/* Desktop: 7-column grid */}
-      <div className="hidden md:grid md:grid-cols-7 h-full min-h-[400px]">
+    <div className="flex-1 min-h-0 overflow-auto p-3 md:p-4">
+      {/* Desktop: 7-column card grid */}
+      <div className="hidden md:grid md:grid-cols-7 gap-2 h-full min-h-[500px]">
         {days.map((day) => {
           const dateKey = format(day, "yyyy-MM-dd");
           const dayShoots = shootsByDay.get(dateKey) ?? [];
@@ -50,86 +47,112 @@ export default function WeekView({ currentDate, shoots, onShootClick, onDayClick
             <div
               key={dateKey}
               className={cn(
-                "border-r border-b flex flex-col min-h-[400px]",
-                today && "bg-primary/5",
+                "rounded-2xl border flex flex-col min-h-[500px] overflow-hidden transition-colors",
+                today
+                  ? "border-primary/40 bg-primary/5 dark:bg-primary/10"
+                  : "border-border bg-card",
               )}
             >
               {/* Day header */}
               <div className={cn(
-                "p-2 border-b sticky top-0 bg-card z-10",
-                today && "bg-primary/10",
+                "px-3 py-3 text-center border-b",
+                today ? "border-primary/20 bg-primary/10" : "border-border",
               )}>
-                <div className="text-center">
-                  <p className="text-xs font-medium text-muted-foreground uppercase">
-                    {format(day, "EEE", { locale: ptBR })}
-                  </p>
-                  <div className={cn(
-                    "text-xl font-bold mx-auto w-9 h-9 flex items-center justify-center rounded-full mt-0.5",
-                    today ? "bg-primary text-primary-foreground" : "text-foreground",
-                  )}>
-                    {format(day, "d")}
-                  </div>
+                <p className={cn(
+                  "text-xs font-semibold uppercase tracking-widest mb-1",
+                  today ? "text-primary" : "text-muted-foreground",
+                )}>
+                  {format(day, "EEE", { locale: ptBR })}
+                </p>
+                <div className={cn(
+                  "text-2xl font-bold mx-auto w-10 h-10 flex items-center justify-center rounded-full",
+                  today
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-foreground hover:bg-muted cursor-default",
+                )}>
+                  {format(day, "d")}
                 </div>
+                {dayShoots.length > 0 && (
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    {dayShoots.length} diária{dayShoots.length !== 1 ? "s" : ""}
+                  </p>
+                )}
               </div>
 
-              {/* Shoots + add button */}
-              <div className="flex-1 p-1.5 space-y-1.5 overflow-y-auto">
+              {/* Shoots */}
+              <div className="flex-1 p-2 space-y-2 overflow-y-auto">
                 {dayShoots.map((s) => (
                   <ShootCard key={s.id} shoot={s} onClick={() => onShootClick(s)} />
                 ))}
-                <button
-                  onClick={() => onDayClick(day)}
-                  className="w-full flex items-center justify-center gap-1 py-2 text-xs text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted rounded transition-colors"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>Nova diária</span>
-                </button>
+                {dayShoots.length === 0 && (
+                  <div className="h-full flex items-center justify-center py-8">
+                    <p className="text-xs text-muted-foreground/40 text-center">Sem diárias</p>
+                  </div>
+                )}
               </div>
+
+              {/* Add button */}
+              <button
+                onClick={() => onDayClick(day)}
+                className="shrink-0 flex items-center justify-center gap-1.5 py-2.5 border-t text-xs text-muted-foreground/60 hover:text-primary hover:bg-primary/5 transition-colors"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Nova diária
+              </button>
             </div>
           );
         })}
       </div>
 
       {/* Mobile: vertical list */}
-      <div className="md:hidden divide-y">
+      <div className="md:hidden space-y-3">
         {days.map((day) => {
           const dateKey = format(day, "yyyy-MM-dd");
           const dayShoots = shootsByDay.get(dateKey) ?? [];
           const today = isToday(day);
 
           return (
-            <div key={dateKey} className={cn("p-3", today && "bg-primary/5")}>
+            <div
+              key={dateKey}
+              className={cn(
+                "rounded-2xl border overflow-hidden",
+                today ? "border-primary/40" : "border-border",
+              )}
+            >
               {/* Day header */}
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
+              <div className={cn(
+                "flex items-center justify-between px-4 py-3",
+                today ? "bg-primary/10" : "bg-card",
+              )}>
+                <div className="flex items-center gap-3">
                   <div className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
+                    "w-10 h-10 rounded-full flex items-center justify-center text-base font-bold shrink-0",
                     today ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
                   )}>
                     {format(day, "d")}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold capitalize">
+                    <p className={cn("text-sm font-semibold capitalize", today && "text-primary")}>
                       {format(day, "EEEE", { locale: ptBR })}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {format(day, "dd/MM/yyyy")}
+                      {dayShoots.length > 0
+                        ? `${dayShoots.length} diária${dayShoots.length !== 1 ? "s" : ""}`
+                        : "Sem diárias"}
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => onDayClick(day)}
-                  className="flex items-center gap-1 text-xs text-primary hover:underline"
+                  className="flex items-center gap-1 text-xs font-medium text-primary hover:bg-primary/10 px-2.5 py-1.5 rounded-full transition-colors"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   Nova
                 </button>
               </div>
 
-              {dayShoots.length === 0 ? (
-                <p className="text-xs text-muted-foreground/60 pl-10">Nenhuma diária</p>
-              ) : (
-                <div className="pl-2 space-y-1.5">
+              {dayShoots.length > 0 && (
+                <div className="p-3 space-y-2 bg-background/50">
                   {dayShoots.map((s) => (
                     <ShootCard key={s.id} shoot={s} onClick={() => onShootClick(s)} />
                   ))}

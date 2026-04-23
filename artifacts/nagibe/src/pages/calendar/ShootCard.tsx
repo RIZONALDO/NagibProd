@@ -1,7 +1,7 @@
-import { Clock, User } from "lucide-react";
+import { Clock, User, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CalendarShoot } from "@/lib/calendar-api";
-import { STATUS_COLORS, STATUS_LABELS } from "@/lib/calendar-api";
+import { STATUS_CARD, STATUS_LABELS } from "@/lib/calendar-api";
 
 interface Props {
   shoot: CalendarShoot;
@@ -9,69 +9,93 @@ interface Props {
   compact?: boolean;
 }
 
-const PRIORITY_DOT: Record<string, string> = {
-  urgent: "bg-red-500",
-  high: "bg-amber-500",
-  medium: "bg-blue-400",
-  low: "bg-green-400",
+const PRIORITY_RING: Record<string, string> = {
+  urgent: "ring-1 ring-red-400",
+  high:   "ring-1 ring-amber-400",
+  medium: "",
+  low:    "",
+};
+
+const PRIORITY_LABEL_COLOR: Record<string, string> = {
+  urgent: "text-red-600 dark:text-red-400",
+  high:   "text-amber-600 dark:text-amber-400",
+  medium: "",
+  low:    "",
 };
 
 export default function ShootCard({ shoot, onClick, compact = false }: Props) {
-  const color = STATUS_COLORS[shoot.status] ?? "bg-gray-400";
-  const priorityDot = PRIORITY_DOT[shoot.priority] ?? PRIORITY_DOT.medium;
+  const card = STATUS_CARD[shoot.status] ?? STATUS_CARD.planned;
   const title = shoot.whatsappSummary || shoot.location;
-  const shortTitle = title.length > 28 ? title.slice(0, 26) + "…" : title;
 
+  /* ── Compact pill (Month view) ─────────────────────────── */
   if (compact) {
+    const shortTitle = title.length > 26 ? title.slice(0, 24) + "…" : title;
     return (
       <button
         onClick={onClick}
-        className="w-full text-left group"
-      >
-        <div className={cn(
-          "flex items-center gap-1.5 px-1.5 py-0.5 rounded text-xs cursor-pointer",
-          "hover:opacity-80 transition-opacity bg-card border",
-          "border-l-[3px]",
+        className={cn(
+          "w-full text-left flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold leading-tight truncate border",
+          "hover:brightness-95 active:scale-[0.98] transition-all duration-100 cursor-pointer",
+          card.bg, card.text, card.border,
         )}
-          style={{ borderLeftColor: color.replace("bg-", "").includes("-") ? undefined : undefined }}
-        >
-          <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${color}`} />
-          <span className="font-medium truncate leading-tight">{shortTitle}</span>
-        </div>
+      >
+        <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", card.dot)} />
+        <span className="truncate">{shortTitle}</span>
       </button>
     );
   }
 
+  /* ── Full card (Week view) ─────────────────────────────── */
+  const shortTitle = title.length > 40 ? title.slice(0, 38) + "…" : title;
   return (
     <button
       onClick={onClick}
       className={cn(
-        "w-full text-left group rounded border overflow-hidden",
-        "hover:shadow-sm transition-all duration-150",
-        "bg-card cursor-pointer",
+        "w-full text-left rounded-xl border p-2.5 space-y-1.5 cursor-pointer",
+        "hover:shadow-md hover:scale-[1.01] active:scale-[0.99]",
+        "transition-all duration-150",
+        card.bg, card.border,
+        PRIORITY_RING[shoot.priority],
       )}
     >
-      {/* Status color bar */}
-      <div className={`h-0.5 w-full ${color}`} />
-      <div className="px-2 py-1.5 space-y-0.5">
-        <div className="flex items-center gap-1.5">
-          <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${priorityDot}`} />
-          <span className="text-xs font-semibold leading-tight line-clamp-1 flex-1">{shortTitle}</span>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          {shoot.time && (
-            <span className="flex items-center gap-0.5">
-              <Clock className="h-2.5 w-2.5" />
-              {shoot.time}
-            </span>
-          )}
-          {shoot.producerName && (
-            <span className="flex items-center gap-0.5 truncate">
-              <User className="h-2.5 w-2.5 shrink-0" />
-              <span className="truncate">{shoot.producerName.split(" ")[0]}</span>
-            </span>
-          )}
-        </div>
+      {/* Title row */}
+      <div className="flex items-start gap-2">
+        <span className={cn("mt-1 w-2 h-2 rounded-full shrink-0", card.dot)} />
+        <span className={cn("text-xs font-bold leading-snug line-clamp-2 flex-1", card.text)}>
+          {shortTitle}
+        </span>
+      </div>
+
+      {/* Meta row */}
+      <div className={cn("flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] pl-4", card.text, "opacity-80")}>
+        {shoot.time && (
+          <span className="flex items-center gap-0.5 font-medium">
+            <Clock className="h-2.5 w-2.5" />
+            {shoot.time}
+          </span>
+        )}
+        {shoot.location && (
+          <span className="flex items-center gap-0.5 truncate max-w-[9rem]">
+            <MapPin className="h-2.5 w-2.5 shrink-0" />
+            <span className="truncate">{shoot.location}</span>
+          </span>
+        )}
+        {shoot.producerName && (
+          <span className="flex items-center gap-0.5">
+            <User className="h-2.5 w-2.5 shrink-0" />
+            {shoot.producerName.split(" ")[0]}
+          </span>
+        )}
+      </div>
+
+      {/* Status label */}
+      <div className="pl-4">
+        <span className={cn(
+          "inline-block text-[10px] font-semibold uppercase tracking-wide",
+          card.text, "opacity-70",
+        )}>
+          {STATUS_LABELS[shoot.status] ?? shoot.status}
+        </span>
       </div>
     </button>
   );
