@@ -79,6 +79,15 @@ router.patch("/settings/whatsapp-templates/:key", requireAdmin, async (req, res)
   res.json({ ...tpl, updatedAt: tpl.updatedAt.toISOString() });
 });
 
+router.get("/producers", requireAuth, async (req, res): Promise<void> => {
+  const users = await db
+    .select({ id: usersTable.id, name: usersTable.name })
+    .from(usersTable)
+    .where(and(eq(usersTable.isProducer, true), eq(usersTable.status, "active")))
+    .orderBy(usersTable.name);
+  res.json(users);
+});
+
 router.get("/settings/users", requireAdmin, async (req, res): Promise<void> => {
   const { search, profile, status } = req.query;
 

@@ -1,12 +1,22 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { SHOOT_PRIORITY_LABELS, SHOOT_STATUS_LABELS } from "@/lib/constants";
+import { useAuth } from "@/contexts/AuthContext";
+
+const BASE = () => import.meta.env.BASE_URL.replace(/\/$/, "");
+
+async function fetchProducers(): Promise<{ id: number; name: string }[]> {
+  const res = await fetch(`${BASE()}/api/producers`, { credentials: "include" });
+  if (!res.ok) return [];
+  return res.json();
+}
 
 const shootSchema = z.object({
   title: z.string().min(2, "Título é obrigatório"),
@@ -31,6 +41,12 @@ interface ShootFormProps {
 }
 
 export function ShootForm({ defaultValues, onSubmit, isSubmitting }: ShootFormProps) {
+  const { user } = useAuth();
+  const { data: producers = [] } = useQuery({
+    queryKey: ["producers"],
+    queryFn: fetchProducers,
+  });
+
   const formattedDate = defaultValues?.date
     ? defaultValues.date.split('T')[0]
     : new Date().toISOString().split('T')[0];
@@ -38,6 +54,8 @@ export function ShootForm({ defaultValues, onSubmit, isSubmitting }: ShootFormPr
   const formattedEndDate = defaultValues?.endDate
     ? defaultValues.endDate.split('T')[0]
     : "";
+
+  const currentUserName = user?.name ?? "";
 
   const form = useForm<ShootFormValues>({
     resolver: zodResolver(shootSchema),
@@ -56,9 +74,16 @@ export function ShootForm({ defaultValues, onSubmit, isSubmitting }: ShootFormPr
     },
   });
 
+  const handleSubmit = (data: ShootFormValues) => {
+    if (!data.producerName) {
+      data.producerName = currentUserName;
+    }
+    onSubmit(data);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         {/* Título — campo principal, full width */}
         <FormField
           control={form.control}
@@ -156,10 +181,34 @@ export function ShootForm({ defaultValues, onSubmit, isSubmitting }: ShootFormPr
             name="producerName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Produtor Responsável</FormLabel>
-                <FormControl>
-                  <Input placeholder="Nome do produtor" {...field} value={field.value || ""} />
-                </FormControl>
+                <FormLabel>
+                  Produtor Responsável{" "}
+                  <span className="text-muted-foreground font-normal">
+                    (padrão: {currentUserName || "você"})
+                  </span>
+                </FormLabel>
+                <Select
+                  onValueChange={(val) => field.onChange(val === "__none__" ? "" : val)}
+                  value={field.value || "__none__"}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder={`Padrão: ${currentUserName || "usuário atual"}`} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="__none__">
+                      {currentUserName ? `Eu mesmo (${currentUserName})` : "Usuário atual"}
+                    </SelectItem>
+                    {producers
+                      .filter((p) => p.name !== currentUserName)
+                      .map((p) => (
+                        <SelectItem key={p.id} value={p.name}>
+                          {p.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
