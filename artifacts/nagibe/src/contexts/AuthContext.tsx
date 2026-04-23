@@ -9,6 +9,7 @@ interface AuthContextValue {
   isAdmin: boolean;
   isOperator: boolean;
   isRevisor: boolean;
+  isProducer: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -39,9 +40,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = profile === "administrador";
   const isOperator = isAdmin || profile === "operador";
   const isRevisor = isOperator || profile === "revisor";
+  const isProducer = isAdmin || (user?.isProducer ?? false);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, isAdmin, isOperator, isRevisor }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, isAdmin, isOperator, isRevisor, isProducer }}>
       {children}
     </AuthContext.Provider>
   );

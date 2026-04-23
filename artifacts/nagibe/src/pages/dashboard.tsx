@@ -1,15 +1,17 @@
 import { Shell } from "@/components/layout/Shell";
 import { useGetDashboardSummary } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Video, Camera, Wrench, AlertCircle, Users, ActivitySquare, ArrowRight } from "lucide-react";
+import { Video, Camera, Wrench, AlertCircle, Users, ActivitySquare, ArrowRight, Clapperboard } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ShootStatusBadge, ShootPriorityBadge } from "@/components/ui/status-badge";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Dashboard() {
   const { data: summary, isLoading, error } = useGetDashboardSummary();
+  const { isProducer } = useAuth();
 
   if (isLoading) {
     return (
@@ -57,9 +59,11 @@ export default function Dashboard() {
               Visão geral da operação em {format(new Date(), "dd 'de' MMMM", { locale: ptBR })}
             </p>
           </div>
-          <Link href="/shoots/new" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2">
-            Nova Pauta
-          </Link>
+          {isProducer && (
+            <Link href="/shoots/new" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2">
+              Nova Pauta
+            </Link>
+          )}
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -149,12 +153,21 @@ export default function Dashboard() {
                             <span className="font-medium group-hover:underline">{shoot.location}</span>
                             <ShootPriorityBadge priority={shoot.priority} className="text-[10px] px-1.5 py-0 h-4" />
                           </div>
-                          <div className="text-sm text-muted-foreground flex items-center gap-2">
+                          <div className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
                             <span>{shoot.time || "Horário não definido"}</span>
                             {shoot.clientProject && (
                               <>
                                 <span>•</span>
                                 <span>{shoot.clientProject}</span>
+                              </>
+                            )}
+                            {(shoot as { producerName?: string | null }).producerName && (
+                              <>
+                                <span>•</span>
+                                <span className="flex items-center gap-1">
+                                  <Clapperboard className="h-3 w-3" />
+                                  {(shoot as { producerName: string }).producerName}
+                                </span>
                               </>
                             )}
                           </div>

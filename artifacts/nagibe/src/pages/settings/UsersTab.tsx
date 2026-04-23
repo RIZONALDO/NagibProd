@@ -31,7 +31,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Pencil, Trash2, KeyRound, UserCheck, UserX } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, KeyRound, UserCheck, UserX, Clapperboard } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -71,6 +72,7 @@ interface UserForm {
   phone: string;
   notes: string;
   status: string;
+  isProducer: boolean;
 }
 
 const emptyForm: UserForm = {
@@ -82,6 +84,7 @@ const emptyForm: UserForm = {
   phone: "",
   notes: "",
   status: "active",
+  isProducer: false,
 };
 
 export default function UsersTab() {
@@ -171,6 +174,7 @@ export default function UsersTab() {
       phone: user.phone ?? "",
       notes: user.notes ?? "",
       status: user.status,
+      isProducer: user.isProducer ?? false,
     });
     setDialogOpen(true);
   };
@@ -244,6 +248,12 @@ export default function UsersTab() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-sm">{user.name}</span>
                         {profileBadge(user.profile)}
+                        {user.isProducer && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border bg-amber-50 text-amber-800 border-amber-200">
+                            <Clapperboard className="h-3 w-3" />
+                            Produtor
+                          </span>
+                        )}
                         <Badge variant={user.status === "active" ? "default" : "secondary"} className="text-xs">
                           {user.status === "active" ? "Ativo" : "Inativo"}
                         </Badge>
@@ -367,6 +377,21 @@ export default function UsersTab() {
               <div className="col-span-2 space-y-1.5">
                 <Label>Observações</Label>
                 <Input value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} />
+              </div>
+              <div className="col-span-2 flex items-center justify-between rounded-lg border p-3 bg-amber-50/50">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <Clapperboard className="h-4 w-4 text-amber-600" />
+                    É Produtor
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Permite criar e gerenciar pautas. Seu nome aparece como responsável.
+                  </p>
+                </div>
+                <Switch
+                  checked={form.isProducer}
+                  onCheckedChange={(v) => setForm((f) => ({ ...f, isProducer: v }))}
+                />
               </div>
             </div>
           </div>

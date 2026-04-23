@@ -46,6 +46,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     login: user.login,
     profile: user.profile,
     avatarUrl: user.avatarUrl,
+    isProducer: user.isProducer,
   };
 
   res.json({
@@ -55,6 +56,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     login: user.login,
     profile: user.profile,
     avatarUrl: user.avatarUrl,
+    isProducer: user.isProducer,
   });
 });
 

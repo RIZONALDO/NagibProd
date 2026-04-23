@@ -7,6 +7,7 @@ export interface SessionUser {
   login: string;
   profile: string;
   avatarUrl: string | null;
+  isProducer: boolean;
 }
 
 declare module "express-session" {

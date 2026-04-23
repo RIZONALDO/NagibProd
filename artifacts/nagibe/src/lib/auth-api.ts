@@ -29,6 +29,7 @@ export interface AuthUser {
   login: string;
   profile: string;
   avatarUrl: string | null;
+  isProducer: boolean;
 }
 
 export interface SystemUser extends AuthUser {

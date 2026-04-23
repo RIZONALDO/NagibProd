@@ -7,12 +7,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function NewShoot() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const createMutation = useCreateShoot();
+  const { user, isProducer } = useAuth();
 
   const handleSubmit = (data: ShootFormValues) => {
     createMutation.mutate({ data }, {
@@ -45,7 +47,13 @@ export default function NewShoot() {
             <CardTitle>Detalhes da Gravação</CardTitle>
           </CardHeader>
           <CardContent>
-            <ShootForm onSubmit={handleSubmit} isSubmitting={createMutation.isPending} />
+            <ShootForm
+              onSubmit={handleSubmit}
+              isSubmitting={createMutation.isPending}
+              defaultValues={{
+                producerName: isProducer && user ? user.name : "",
+              }}
+            />
           </CardContent>
         </Card>
       </div>

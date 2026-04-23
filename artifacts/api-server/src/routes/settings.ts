@@ -104,6 +104,7 @@ router.get("/settings/users", requireAdmin, async (req, res): Promise<void> => {
       phone: usersTable.phone,
       notes: usersTable.notes,
       status: usersTable.status,
+      isProducer: usersTable.isProducer,
       lastLoginAt: usersTable.lastLoginAt,
       createdAt: usersTable.createdAt,
       updatedAt: usersTable.updatedAt,
@@ -121,7 +122,7 @@ router.get("/settings/users", requireAdmin, async (req, res): Promise<void> => {
 });
 
 router.post("/settings/users", requireAdmin, async (req, res): Promise<void> => {
-  const { name, email, login, password, profile, phone, notes, avatarUrl, status } = req.body ?? {};
+  const { name, email, login, password, profile, phone, notes, avatarUrl, status, isProducer } = req.body ?? {};
   if (!name || !email || !login || !password || !profile) {
     res.status(400).json({ error: "name, email, login, password e profile são obrigatórios" });
     return;
@@ -150,6 +151,7 @@ router.post("/settings/users", requireAdmin, async (req, res): Promise<void> => 
     notes: notes ? String(notes) : null,
     avatarUrl: avatarUrl ? String(avatarUrl) : null,
     status: status ?? "active",
+    isProducer: isProducer === true || isProducer === "true",
   }).returning();
 
   await db.insert(activityLogsTable).values({
@@ -167,6 +169,7 @@ router.post("/settings/users", requireAdmin, async (req, res): Promise<void> => 
     phone: user.phone,
     notes: user.notes,
     status: user.status,
+    isProducer: user.isProducer,
     lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
     createdAt: user.createdAt.toISOString(),
     updatedAt: user.updatedAt.toISOString(),
@@ -177,7 +180,7 @@ router.patch("/settings/users/:id", requireAdmin, async (req, res): Promise<void
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "ID inválido" }); return; }
 
-  const { name, email, login, profile, phone, notes, avatarUrl, status } = req.body ?? {};
+  const { name, email, login, profile, phone, notes, avatarUrl, status, isProducer } = req.body ?? {};
 
   const [existing] = await db.select().from(usersTable).where(eq(usersTable.id, id));
   if (!existing) { res.status(404).json({ error: "Usuário não encontrado" }); return; }
@@ -211,6 +214,7 @@ router.patch("/settings/users/:id", requireAdmin, async (req, res): Promise<void
   if (notes !== undefined) update.notes = notes ? String(notes) : null;
   if (avatarUrl !== undefined) update.avatarUrl = avatarUrl ? String(avatarUrl) : null;
   if (status !== undefined) update.status = String(status);
+  if (isProducer !== undefined) update.isProducer = isProducer === true || isProducer === "true";
 
   const [user] = await db.update(usersTable).set(update).where(eq(usersTable.id, id)).returning();
 
@@ -235,6 +239,7 @@ router.patch("/settings/users/:id", requireAdmin, async (req, res): Promise<void
     phone: user.phone,
     notes: user.notes,
     status: user.status,
+    isProducer: user.isProducer,
     lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
     createdAt: user.createdAt.toISOString(),
     updatedAt: user.updatedAt.toISOString(),
