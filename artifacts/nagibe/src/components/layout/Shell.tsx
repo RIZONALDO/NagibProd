@@ -10,12 +10,15 @@ import {
   Menu,
   LogOut,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Sun,
   Moon,
   Monitor,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import {
   DropdownMenu,
@@ -23,7 +26,6 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -61,22 +63,38 @@ function ThemeToggleButton({ className }: { className?: string }) {
 export function Shell({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    try { return localStorage.getItem("nagibe-sidebar-collapsed") === "true"; } catch { return false; }
+  });
   const { user, isAdmin, logout } = useAuth();
   const { theme, setTheme, resolvedTheme } = useTheme();
 
-  const NavLinks = ({ onClick }: { onClick?: () => void }) => (
-    <nav className="flex flex-col gap-2">
+  useEffect(() => {
+    try { localStorage.setItem("nagibe-sidebar-collapsed", String(isCollapsed)); } catch { /* ignore */ }
+  }, [isCollapsed]);
+
+  const isDark = resolvedTheme === "dark";
+
+  const NavLinks = ({ onClick, collapsed = false }: { onClick?: () => void; collapsed?: boolean }) => (
+    <nav className="flex flex-col gap-1">
       {NAV_ITEMS.map((item) => {
         const isActive = item.href === "/" ? location === "/" : location.startsWith(item.href);
         return (
-          <Link key={item.href} href={item.href} onClick={onClick} className={cn(
-            "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-            isActive 
-              ? "bg-primary/10 text-primary" 
-              : "text-muted-foreground hover:bg-muted hover:text-foreground"
-          )}>
-            <item.icon className="h-5 w-5" />
-            {item.label}
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={onClick}
+            title={collapsed ? item.label : undefined}
+            className={cn(
+              "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+              collapsed && "justify-center px-2",
+              isActive
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
+          >
+            <item.icon className="h-5 w-5 shrink-0" />
+            {!collapsed && item.label}
           </Link>
         );
       })}
@@ -84,15 +102,17 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <Link
           href="/settings"
           onClick={onClick}
+          title={collapsed ? "Configurações" : undefined}
           className={cn(
             "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors mt-2 border-t pt-4",
+            collapsed && "justify-center px-2",
             location.startsWith("/settings")
               ? "bg-primary/10 text-primary"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
           )}
         >
-          <Settings className="h-5 w-5" />
-          Configurações
+          <Settings className="h-5 w-5 shrink-0" />
+          {!collapsed && "Configurações"}
         </Link>
       )}
     </nav>
@@ -101,66 +121,106 @@ export function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-[100dvh] bg-background">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex w-64 flex-col border-r bg-card px-4 py-6">
-        <div className="flex items-center gap-2 px-2 mb-8">
-          <div className="bg-primary text-primary-foreground p-1.5 rounded-md">
+      <aside
+        className={cn(
+          "hidden md:flex flex-col border-r bg-card px-3 py-6 transition-all duration-200",
+          isCollapsed ? "w-[68px]" : "w-64"
+        )}
+      >
+        {/* Logo */}
+        <div className={cn(
+          "flex items-center gap-2 mb-8",
+          isCollapsed ? "justify-center px-1" : "px-2"
+        )}>
+          <div className="bg-primary text-primary-foreground p-1.5 rounded-md shrink-0">
             <Video className="h-5 w-5" />
           </div>
-          <span className="font-bold text-lg tracking-tight">Nagibe Produção</span>
+          {!isCollapsed && (
+            <span className="font-bold text-lg tracking-tight truncate">Nagibe Produção</span>
+          )}
         </div>
-        <NavLinks />
 
+        {/* Nav */}
+        <NavLinks collapsed={isCollapsed} />
+
+        {/* Bottom: theme + collapse + user */}
         {user && (
-          <div className="mt-auto pt-4 border-t space-y-1">
-            {/* Theme toggle row */}
-            <div className="flex items-center justify-between px-3 py-1.5 rounded-md text-xs text-muted-foreground">
-              <span>Aparência</span>
-              <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5">
+          <div className="mt-auto pt-3 border-t space-y-1">
+
+            {/* Dark mode switch */}
+            <div
+              className={cn(
+                "flex items-center px-3 py-2 rounded-md",
+                isCollapsed ? "justify-center" : "justify-between gap-2"
+              )}
+              title={isCollapsed ? (isDark ? "Modo escuro ativo" : "Modo claro ativo") : undefined}
+            >
+              {!isCollapsed && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  {isDark ? <Moon className="h-3.5 w-3.5" /> : <Sun className="h-3.5 w-3.5" />}
+                  <span>{isDark ? "Modo escuro" : "Modo claro"}</span>
+                </div>
+              )}
+              {isCollapsed ? (
                 <button
-                  onClick={() => setTheme("light")}
-                  title="Modo claro"
-                  className={cn(
-                    "p-1.5 rounded transition-colors",
-                    theme === "light" ? "bg-card text-foreground shadow-sm" : "hover:text-foreground",
-                  )}
+                  onClick={() => setTheme(isDark ? "light" : "dark")}
+                  title={isDark ? "Mudar para modo claro" : "Mudar para modo escuro"}
+                  className="flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <Sun className="h-3.5 w-3.5" />
+                  {isDark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
                 </button>
-                <button
-                  onClick={() => setTheme("system")}
-                  title="Seguir sistema"
-                  className={cn(
-                    "p-1.5 rounded transition-colors",
-                    theme === "system" ? "bg-card text-foreground shadow-sm" : "hover:text-foreground",
-                  )}
-                >
-                  <Monitor className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  onClick={() => setTheme("dark")}
-                  title="Modo escuro"
-                  className={cn(
-                    "p-1.5 rounded transition-colors",
-                    theme === "dark" ? "bg-card text-foreground shadow-sm" : "hover:text-foreground",
-                  )}
-                >
-                  <Moon className="h-3.5 w-3.5" />
-                </button>
-              </div>
+              ) : (
+                <Switch
+                  checked={isDark}
+                  onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+                  aria-label="Alternar modo escuro"
+                />
+              )}
+            </div>
+
+            {/* Collapse button — below a separator */}
+            <div className="border-t pt-2">
+              <button
+                onClick={() => setIsCollapsed(v => !v)}
+                title={isCollapsed ? "Expandir menu" : "Recolher menu"}
+                className={cn(
+                  "w-full flex items-center gap-2 px-3 py-2 rounded-md text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors",
+                  isCollapsed && "justify-center"
+                )}
+              >
+                {isCollapsed ? (
+                  <ChevronRight className="h-4 w-4 shrink-0" />
+                ) : (
+                  <>
+                    <ChevronLeft className="h-4 w-4 shrink-0" />
+                    <span>Recolher menu</span>
+                  </>
+                )}
+              </button>
             </div>
 
             {/* User menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors">
+                <button
+                  title={isCollapsed ? user.name : undefined}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors",
+                    isCollapsed && "justify-center px-2"
+                  )}
+                >
                   <div className="h-7 w-7 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-xs shrink-0">
                     {user.name.charAt(0).toUpperCase()}
                   </div>
-                  <div className="flex-1 min-w-0 text-left">
-                    <p className="font-medium text-foreground truncate text-xs">{user.name}</p>
-                    <p className="text-muted-foreground truncate text-xs capitalize">{user.profile}</p>
-                  </div>
-                  <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
+                  {!isCollapsed && (
+                    <>
+                      <div className="flex-1 min-w-0 text-left">
+                        <p className="font-medium text-foreground truncate text-xs">{user.name}</p>
+                        <p className="text-muted-foreground truncate text-xs capitalize">{user.profile}</p>
+                      </div>
+                      <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
+                    </>
+                  )}
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" side="top" className="w-48">
