@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Shell } from "@/components/layout/Shell";
 import { EquipmentForm, EquipmentFormValues } from "./form";
 import { useCreateEquipment, getListEquipmentQueryKey } from "@workspace/api-client-react";
@@ -13,6 +14,14 @@ export default function NewEquipment() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const createMutation = useCreateEquipment();
+  const [suggestedCode, setSuggestedCode] = useState<string>("");
+
+  useEffect(() => {
+    fetch("/api/equipment/next-code")
+      .then(r => r.json())
+      .then(data => setSuggestedCode(data.code))
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = (data: EquipmentFormValues) => {
     createMutation.mutate({ data: { ...data, active: true } }, {
@@ -45,7 +54,12 @@ export default function NewEquipment() {
             <CardTitle>Detalhes do Equipamento</CardTitle>
           </CardHeader>
           <CardContent>
-            <EquipmentForm onSubmit={handleSubmit} isSubmitting={createMutation.isPending} />
+            <EquipmentForm
+              key={suggestedCode}
+              defaultValues={{ internalCode: suggestedCode }}
+              onSubmit={handleSubmit}
+              isSubmitting={createMutation.isPending}
+            />
           </CardContent>
         </Card>
       </div>

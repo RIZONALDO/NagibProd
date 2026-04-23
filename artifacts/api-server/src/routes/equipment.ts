@@ -43,6 +43,25 @@ router.get("/equipment", async (req, res): Promise<void> => {
   })));
 });
 
+router.get("/equipment/next-code", async (_req, res): Promise<void> => {
+  const rows = await db
+    .select({ internalCode: equipmentTable.internalCode })
+    .from(equipmentTable);
+
+  const NGB_RE = /^NGB-(\d{4})$/;
+  let max = 0;
+  for (const row of rows) {
+    const m = row.internalCode?.match(NGB_RE);
+    if (m) {
+      const n = parseInt(m[1], 10);
+      if (n > max) max = n;
+    }
+  }
+
+  const next = String(max + 1).padStart(4, "0");
+  res.json({ code: `NGB-${next}` });
+});
+
 router.post("/equipment", async (req, res): Promise<void> => {
   const parsed = CreateEquipmentBody.safeParse(req.body);
   if (!parsed.success) {
