@@ -43,10 +43,6 @@ import { Button } from "@/components/ui/button";
 import { ShootStatusBadge, ShootPriorityBadge, EquipmentStatusBadge, ShootOverdueBadge, isShootOverdue } from "@/components/ui/status-badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { ShootForm, ShootFormValues } from "./form";
 import { TravelSection } from "./TravelSection";
@@ -76,10 +72,13 @@ export default function ShootDetail() {
 
   // Inline add form states
   const [teamMemberId, setTeamMemberId] = useState<string>("");
+  const [teamSearch, setTeamSearch] = useState<string>("");
+  const [teamSearchOpen, setTeamSearchOpen] = useState(false);
   const [teamRole, setTeamRole] = useState<string>("");
-  const [teamMemberOpen, setTeamMemberOpen] = useState(false);
-  
+
   const [equipmentId, setEquipmentId] = useState<string>("");
+  const [equipSearch, setEquipSearch] = useState<string>("");
+  const [equipSearchOpen, setEquipSearchOpen] = useState(false);
   const [equipQuantity, setEquipQuantity] = useState<string>("1");
 
   // Linked items suggestion state
@@ -182,6 +181,7 @@ export default function ShootDetail() {
         toast({ title: "Membro adicionado" });
         queryClient.invalidateQueries({ queryKey: getGetShootQueryKey(id) });
         setTeamMemberId("");
+        setTeamSearch("");
         setTeamRole("");
       }
     });
@@ -212,6 +212,7 @@ export default function ShootDetail() {
       onSuccess: async (parentRow) => {
         queryClient.invalidateQueries({ queryKey: getGetShootQueryKey(id) });
         setEquipmentId("");
+        setEquipSearch("");
         setEquipQuantity("1");
 
         // Fetch and process linked items
@@ -591,52 +592,45 @@ export default function ShootDetail() {
 
                 {/* Inline quick-add form */}
                 <div className="flex gap-2 items-center">
-                  <Popover open={teamMemberOpen} onOpenChange={setTeamMemberOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={teamMemberOpen}
-                        className="flex-1 h-9 text-sm justify-between font-normal"
-                      >
-                        <span className="truncate">
-                          {teamMemberId
-                            ? (teamMembers ?? []).find(tm => tm.id.toString() === teamMemberId)?.name ?? "Membro..."
-                            : "Membro..."}
-                        </span>
-                        <ChevronsUpDown className="ml-1 h-3.5 w-3.5 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-64 p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="Buscar membro..." className="h-9" />
-                        <CommandList>
-                          <CommandEmpty>Nenhum membro encontrado.</CommandEmpty>
-                          <CommandGroup>
-                            {(teamMembers ?? [])
-                              .filter(tm => !shoot.team?.some(t => t.teamMemberId === tm.id))
-                              .map(tm => (
-                                <CommandItem
-                                  key={tm.id}
-                                  value={tm.name}
-                                  onSelect={() => {
-                                    setTeamMemberId(tm.id.toString());
-                                    if (tm.primaryRole) setTeamRole(tm.primaryRole);
-                                    setTeamMemberOpen(false);
-                                  }}
-                                >
-                                  <Check className={cn("mr-2 h-4 w-4 shrink-0", teamMemberId === tm.id.toString() ? "opacity-100" : "opacity-0")} />
-                                  <span className="flex-1 truncate">{tm.name}</span>
-                                  {tm.primaryRole && (
-                                    <span className="ml-2 text-xs text-muted-foreground shrink-0">{tm.primaryRole}</span>
-                                  )}
-                                </CommandItem>
-                              ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                  <div className="relative flex-1">
+                    <Input
+                      value={teamSearch}
+                      onChange={e => { setTeamSearch(e.target.value); setTeamMemberId(""); setTeamSearchOpen(true); }}
+                      onFocus={() => setTeamSearchOpen(true)}
+                      onBlur={() => setTimeout(() => setTeamSearchOpen(false), 150)}
+                      placeholder="Buscar membro..."
+                      className="h-9 text-sm"
+                    />
+                    {teamSearchOpen && (
+                      <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-md border bg-popover shadow-md max-h-52 overflow-y-auto">
+                        {(teamMembers ?? [])
+                          .filter(tm => !shoot.team?.some(t => t.teamMemberId === tm.id))
+                          .filter(tm => !teamSearch || tm.name.toLowerCase().includes(teamSearch.toLowerCase()))
+                          .map(tm => (
+                            <button
+                              key={tm.id}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-accent flex items-center justify-between gap-2"
+                              onMouseDown={e => {
+                                e.preventDefault();
+                                setTeamSearch(tm.name);
+                                setTeamMemberId(tm.id.toString());
+                                if (tm.primaryRole) setTeamRole(tm.primaryRole);
+                                setTeamSearchOpen(false);
+                              }}
+                            >
+                              <span className="truncate">{tm.name}</span>
+                              {tm.primaryRole && <span className="text-xs text-muted-foreground shrink-0">{tm.primaryRole}</span>}
+                            </button>
+                          ))}
+                        {(teamMembers ?? [])
+                          .filter(tm => !shoot.team?.some(t => t.teamMemberId === tm.id))
+                          .filter(tm => !teamSearch || tm.name.toLowerCase().includes(teamSearch.toLowerCase()))
+                          .length === 0 && (
+                          <p className="px-3 py-2 text-sm text-muted-foreground">Nenhum membro encontrado</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   <Select value={teamRole} onValueChange={setTeamRole}>
                     <SelectTrigger className="w-36 h-9 text-sm">
                       <SelectValue placeholder="Função..." />
@@ -767,20 +761,44 @@ export default function ShootDetail() {
                 
                 {/* Inline quick-add equipment */}
                 <div className="mt-3 flex gap-2 items-center">
-                  <Select value={equipmentId} onValueChange={setEquipmentId}>
-                    <SelectTrigger className="flex-1 h-9 text-sm">
-                      <SelectValue placeholder="Equipamento..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(equipments ?? [])
-                        .filter(eq => !shoot.equipmentItems?.some(i => i.equipmentId === eq.id && !i.isLinkedItem))
-                        .map(eq => (
-                          <SelectItem key={eq.id} value={eq.id.toString()}>
-                            {eq.name} <span className="text-muted-foreground text-xs">({eq.availableQuantity} disp.)</span>
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="relative flex-1">
+                    <Input
+                      value={equipSearch}
+                      onChange={e => { setEquipSearch(e.target.value); setEquipmentId(""); setEquipSearchOpen(true); }}
+                      onFocus={() => setEquipSearchOpen(true)}
+                      onBlur={() => setTimeout(() => setEquipSearchOpen(false), 150)}
+                      placeholder="Buscar equipamento..."
+                      className="h-9 text-sm"
+                    />
+                    {equipSearchOpen && (
+                      <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-md border bg-popover shadow-md max-h-52 overflow-y-auto">
+                        {(equipments ?? [])
+                          .filter(eq => !shoot.equipmentItems?.some(i => i.equipmentId === eq.id && !i.isLinkedItem))
+                          .filter(eq => !equipSearch || eq.name.toLowerCase().includes(equipSearch.toLowerCase()))
+                          .map(eq => (
+                            <button
+                              key={eq.id}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-accent flex items-center justify-between gap-2"
+                              onMouseDown={e => {
+                                e.preventDefault();
+                                setEquipSearch(eq.name);
+                                setEquipmentId(eq.id.toString());
+                                setEquipSearchOpen(false);
+                              }}
+                            >
+                              <span className="truncate">{eq.name}</span>
+                              <span className="text-xs text-muted-foreground shrink-0">{eq.availableQuantity} disp.</span>
+                            </button>
+                          ))}
+                        {(equipments ?? [])
+                          .filter(eq => !shoot.equipmentItems?.some(i => i.equipmentId === eq.id && !i.isLinkedItem))
+                          .filter(eq => !equipSearch || eq.name.toLowerCase().includes(equipSearch.toLowerCase()))
+                          .length === 0 && (
+                          <p className="px-3 py-2 text-sm text-muted-foreground">Nenhum equipamento encontrado</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   <Input
                     type="number"
                     min="1"
