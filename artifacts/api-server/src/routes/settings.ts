@@ -40,9 +40,9 @@ router.patch("/settings/app", requireAdmin, async (req, res): Promise<void> => {
 
   for (const [key, value] of Object.entries(updates)) {
     await db
-      .update(appSettingsTable)
-      .set({ value: String(value) })
-      .where(eq(appSettingsTable.key, key));
+      .insert(appSettingsTable)
+      .values({ key, value: String(value) })
+      .onConflictDoUpdate({ target: appSettingsTable.key, set: { value: String(value) } });
   }
 
   if (changedSensitive.length > 0) {
