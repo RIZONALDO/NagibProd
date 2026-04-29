@@ -3,8 +3,12 @@ import cors from "cors";
 import session from "express-session";
 import ConnectPgSimple from "connect-pg-simple";
 import pinoHttp from "pino-http";
+import path from "path";
+import { fileURLToPath } from "url";
 import router from "./routes";
 import { logger } from "./lib/logger";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const PgSession = ConnectPgSimple(session);
 
@@ -30,14 +34,13 @@ app.use(
   }),
 );
 app.use(cors({ origin: true, credentials: true }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 app.use(
   session({
     store: new PgSession({
       conString: process.env.DATABASE_URL,
-      createTableIfMissing: true,
     }),
     secret: process.env.SESSION_SECRET ?? "nagibe-dev-secret",
     resave: false,
@@ -52,5 +55,13 @@ app.use(
 );
 
 app.use("/api", router);
+
+if (process.env["NODE_ENV"] === "production") {
+  const frontendDir = path.resolve(__dirname, "../../nagibe/dist/public");
+  app.use(express.static(frontendDir));
+  app.get("/{*path}", (_req, res) => {
+    res.sendFile(path.join(frontendDir, "index.html"));
+  });
+}
 
 export default app;

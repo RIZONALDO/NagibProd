@@ -202,7 +202,7 @@ router.patch("/settings/users/:id", requireAdmin, async (req, res): Promise<void
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "ID inválido" }); return; }
 
-  const { name, email, login, profile, phone, notes, avatarUrl, status, isProducer } = req.body ?? {};
+  const { name, email, login, password, profile, phone, notes, avatarUrl, status, isProducer } = req.body ?? {};
 
   const [existing] = await db.select().from(usersTable).where(eq(usersTable.id, id));
   if (!existing) { res.status(404).json({ error: "Usuário não encontrado" }); return; }
@@ -231,6 +231,7 @@ router.patch("/settings/users/:id", requireAdmin, async (req, res): Promise<void
   if (name) update.name = String(name);
   if (email) update.email = String(email);
   if (login) update.login = String(login);
+  if (password) update.passwordHash = await bcrypt.hash(String(password), 10);
   if (profile) update.profile = String(profile);
   if (phone !== undefined) update.phone = phone ? String(phone) : null;
   if (notes !== undefined) update.notes = notes ? String(notes) : null;
