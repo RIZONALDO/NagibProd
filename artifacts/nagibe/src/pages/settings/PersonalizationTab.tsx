@@ -219,15 +219,12 @@ export default function PersonalizationTab() {
             onChange={(v) => set("logo_small_url", v)}
           />
 
-          <div className="space-y-1.5">
-            <Label>URL do favicon</Label>
-            <Input
-              value={form.favicon_url ?? ""}
-              onChange={(e) => set("favicon_url", e.target.value)}
-              placeholder="https://..."
-            />
-            <p className="text-xs text-muted-foreground">Ícone exibido na aba do navegador. Tamanho: 32×32px.</p>
-          </div>
+          <ImageUploadField
+            label="Favicon (ícone da aba do navegador)"
+            hint="Recomendado: PNG quadrado 32×32 ou 64×64 px."
+            value={form.favicon_url ?? ""}
+            onChange={(v) => set("favicon_url", v)}
+          />
         </CardContent>
       </Card>
 

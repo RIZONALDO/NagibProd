@@ -1,9 +1,11 @@
 import { Switch, Route, Router as WouterRouter, useLocation, Redirect } from "wouter";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { settingsApi } from "@/lib/auth-api";
 import NotFound from "@/pages/not-found";
 
 import LoginPage from "@/pages/login";
@@ -25,6 +27,16 @@ import SettingsPage from "@/pages/settings/index";
 import DiariasReport from "@/pages/reports/DiariasReport";
 
 const queryClient = new QueryClient();
+
+function FaviconApplier() {
+  const { data: settings } = useQuery({ queryKey: ["app-settings"], queryFn: settingsApi.getApp });
+  useEffect(() => {
+    const url = settings?.favicon_url || "/favicon.ico";
+    const link = document.querySelector<HTMLLinkElement>("link[rel~='icon']");
+    if (link) link.href = url;
+  }, [settings?.favicon_url]);
+  return null;
+}
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, loading } = useAuth();
@@ -115,6 +127,7 @@ function App() {
   return (
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
+        <FaviconApplier />
         <TooltipProvider>
           <AuthProvider>
             <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
