@@ -145,9 +145,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
           isCollapsed ? "flex justify-center px-1" : "px-2"
         )}>
           <div className={cn("flex items-center gap-3", isCollapsed && "justify-center")}>
-            <div className="bg-primary text-primary-foreground p-2 rounded-lg shrink-0 flex items-center justify-center">
+            <div className={cn("shrink-0 flex items-center justify-center", logoUrl ? "h-9 w-9" : "bg-primary text-primary-foreground p-2 rounded-lg")}>
               {logoUrl ? (
-                <img src={logoUrl} alt={companyName} className="h-7 w-7 object-contain" />
+                <img src={logoUrl} alt={companyName} className="h-9 w-9 object-contain" />
               ) : (
                 <Video className="h-7 w-7" />
               )}
@@ -262,9 +262,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
         {/* Mobile Header */}
         <header className="md:hidden flex items-center justify-between border-b bg-card px-4 h-14 shrink-0">
           <div className="flex items-center gap-2">
-            <div className="bg-primary text-primary-foreground p-1.5 rounded-md shrink-0 flex items-center justify-center">
+            <div className={cn("shrink-0 flex items-center justify-center", logoUrl ? "h-7 w-7" : "bg-primary text-primary-foreground p-1.5 rounded-md")}>
               {logoUrl ? (
-                <img src={logoUrl} alt={companyName} className="h-5 w-5 object-contain" />
+                <img src={logoUrl} alt={companyName} className="h-7 w-7 object-contain" />
               ) : (
                 <Video className="h-5 w-5" />
               )}
@@ -288,9 +288,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <SheetContent side="right" className="w-[240px] sm:w-[280px]">
                 <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
                 <div className="flex items-center gap-2 mb-8 mt-2">
-                  <div className="bg-primary text-primary-foreground p-1.5 rounded-md shrink-0 flex items-center justify-center">
+                  <div className={cn("shrink-0 flex items-center justify-center", logoUrl ? "h-7 w-7" : "bg-primary text-primary-foreground p-1.5 rounded-md")}>
                     {logoUrl ? (
-                      <img src={logoUrl} alt={companyName} className="h-5 w-5 object-contain" />
+                      <img src={logoUrl} alt={companyName} className="h-7 w-7 object-contain" />
                     ) : (
                       <Video className="h-5 w-5" />
                     )}
