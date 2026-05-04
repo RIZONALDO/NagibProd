@@ -21,7 +21,7 @@ import {
   ExternalLink,
   Calendar,
 } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { CalendarShoot } from "@/lib/calendar-api";
 import {
@@ -55,7 +55,7 @@ export default function ShootDetailModal({ shoot, onClose }: Props) {
 
   const dateStr = (() => {
     try {
-      return format(parseISO(shoot.date), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+      return format(new Date(shoot.date + "T12:00:00"), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR });
     } catch {
       return shoot.date;
     }

@@ -9,7 +9,7 @@ import {
   SHOOT_PRIORITY_LABELS
 } from "@/lib/constants"
 import { CheckCircle2, TriangleAlert, XCircle } from "lucide-react"
-import { differenceInCalendarDays, parseISO } from "date-fns"
+import { differenceInCalendarDays } from "date-fns"
 
 export function EquipmentStatusBadge({ status, className }: { status: string, className?: string }) {
   let variant: "default" | "secondary" | "destructive" | "outline" = "default";
@@ -71,7 +71,7 @@ export function isShootOverdue(shoot: { status: string; date: string; endDate?: 
   if (shoot.status === "closed" || shoot.status === "cancelled") return false;
   const referenceDate = shoot.endDate ?? shoot.date;
   try {
-    const diff = differenceInCalendarDays(new Date(), parseISO(referenceDate));
+    const diff = differenceInCalendarDays(new Date(), new Date(referenceDate + "T12:00:00"));
     return diff > 1;
   } catch {
     return false;

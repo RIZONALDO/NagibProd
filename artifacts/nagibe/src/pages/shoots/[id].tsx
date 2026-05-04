@@ -46,7 +46,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { ShootForm, ShootFormValues } from "./form";
 import { TravelSection } from "./TravelSection";
-import { format, differenceInCalendarDays, parseISO } from "date-fns";
+import { format, differenceInCalendarDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { TEAM_ROLES, EQUIPMENT_CATEGORIES } from "@/lib/constants";
 import { 
@@ -108,7 +108,7 @@ export default function ShootDetail() {
   const canFinalize = (s: typeof shoot) => {
     const refDate = (s as { endDate?: string | null }).endDate ?? s.date;
     try {
-      return differenceInCalendarDays(new Date(), parseISO(refDate)) >= 0;
+      return differenceInCalendarDays(new Date(), new Date(refDate + "T12:00:00")) >= 0;
     } catch {
       return false;
     }
@@ -294,7 +294,7 @@ export default function ShootDetail() {
 
   const getPautaText = () => {
     if (!shoot) return "";
-    const formattedDate = format(new Date(shoot.date), "dd/MM/yyyy");
+    const formattedDate = format(new Date(shoot.date + "T12:00:00"), "dd/MM/yyyy");
     
     let text = `🎬 *Espelho da Pauta*\n`;
     text += `📅 Data: ${formattedDate}\n`;
