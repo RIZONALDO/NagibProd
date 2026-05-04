@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
   addMonths,
@@ -38,7 +38,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { useListTeamMembers } from "@workspace/api-client-react";
+import { useListTeamMembers, useUpdateShoot } from "@workspace/api-client-react";
+import { useToast } from "@/hooks/use-toast";
 import { fetchCalendar, type CalendarShoot, type CalendarFilters, STATUS_LABELS, PRIORITY_LABELS } from "@/lib/calendar-api";
 import MonthView from "./MonthView";
 import WeekView from "./WeekView";
@@ -97,6 +98,53 @@ export default function CalendarPage() {
 
   const { data: teamData } = useListTeamMembers({ status: "active" });
   const teamMembers = (teamData as { id: number; name: string }[] | undefined) ?? [];
+
+  const [draggingId, setDraggingId] = useState<number | null>(null);
+  const [dragOverDay, setDragOverDay] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const updateShoot = useUpdateShoot();
+
+  const handleDragStart = useCallback((e: React.DragEvent, shoot: CalendarShoot) => {
+    e.dataTransfer.setData("shootId", shoot.id.toString());
+    e.dataTransfer.effectAllowed = "move";
+    setDraggingId(shoot.id);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    setDraggingId(null);
+    setDragOverDay(null);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, dateKey: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverDay(dateKey);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setDragOverDay(null);
+    }
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent, dateKey: string) => {
+    e.preventDefault();
+    const shootId = parseInt(e.dataTransfer.getData("shootId"));
+    const shoot = shoots.find((s) => s.id === shootId);
+    setDraggingId(null);
+    setDragOverDay(null);
+    if (!shoot || shoot.date === dateKey) return;
+    updateShoot.mutate(
+      { id: shootId, data: { date: dateKey } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["calendar"] });
+          toast({ title: "Data atualizada" });
+        },
+      }
+    );
+  }, [shoots, updateShoot, queryClient, toast]);
 
   const navigatePrev = () => {
     setCurrentDate((d) => (view === "month" ? subMonths(d, 1) : subWeeks(d, 1)));
@@ -357,6 +405,13 @@ export default function CalendarPage() {
               shoots={shoots}
               onShootClick={setSelectedShoot}
               onDayClick={handleDayClick}
+              draggingId={draggingId}
+              dragOverDay={dragOverDay}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
             />
           ) : (
             <WeekView
@@ -364,6 +419,13 @@ export default function CalendarPage() {
               shoots={shoots}
               onShootClick={setSelectedShoot}
               onDayClick={handleDayClick}
+              draggingId={draggingId}
+              dragOverDay={dragOverDay}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
             />
           )}
         </div>

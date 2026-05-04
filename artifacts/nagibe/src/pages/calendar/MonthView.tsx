@@ -32,9 +32,28 @@ interface Props {
   shoots: CalendarShoot[];
   onShootClick: (shoot: CalendarShoot) => void;
   onDayClick: (date: Date) => void;
+  draggingId: number | null;
+  dragOverDay: string | null;
+  onDragStart: (e: React.DragEvent, shoot: CalendarShoot) => void;
+  onDragEnd: () => void;
+  onDragOver: (e: React.DragEvent, dateKey: string) => void;
+  onDragLeave: (e: React.DragEvent) => void;
+  onDrop: (e: React.DragEvent, dateKey: string) => void;
 }
 
-export default function MonthView({ currentDate, shoots, onShootClick, onDayClick }: Props) {
+export default function MonthView({
+  currentDate,
+  shoots,
+  onShootClick,
+  onDayClick,
+  draggingId,
+  dragOverDay,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+}: Props) {
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
 
   const { days, shootsByDay } = useMemo(() => {
@@ -75,13 +94,19 @@ export default function MonthView({ currentDate, shoots, onShootClick, onDayClic
           const isExpanded = expandedDay === dateKey;
           const visibleShoots = isExpanded ? dayShoots : dayShoots.slice(0, MAX_VISIBLE);
           const extra = dayShoots.length - MAX_VISIBLE;
+          const isDropTarget = dragOverDay === dateKey;
 
           return (
             <div
               key={dateKey}
+              onDragOver={(e) => onDragOver(e, dateKey)}
+              onDragLeave={onDragLeave}
+              onDrop={(e) => onDrop(e, dateKey)}
               className={cn(
                 "rounded-xl flex flex-col min-h-[90px] md:min-h-[110px] border transition-colors group",
-                today
+                isDropTarget
+                  ? "ring-2 ring-primary border-primary/40 bg-primary/5"
+                  : today
                   ? "border-primary/40 bg-primary/5 dark:bg-primary/10"
                   : isCurrentMonth
                   ? "border-border bg-card hover:border-primary/20"
@@ -122,7 +147,15 @@ export default function MonthView({ currentDate, shoots, onShootClick, onDayClic
                 {/* Desktop: pill cards */}
                 <div className="hidden md:flex flex-col gap-0.5">
                   {visibleShoots.map((s) => (
-                    <ShootCard key={s.id} shoot={s} onClick={() => onShootClick(s)} compact />
+                    <div
+                      key={s.id}
+                      draggable
+                      onDragStart={(e) => onDragStart(e, s)}
+                      onDragEnd={onDragEnd}
+                      className={cn("transition-opacity cursor-grab active:cursor-grabbing", draggingId === s.id && "opacity-40")}
+                    >
+                      <ShootCard shoot={s} onClick={() => onShootClick(s)} compact />
+                    </div>
                   ))}
                   {!isExpanded && extra > 0 && (
                     <button

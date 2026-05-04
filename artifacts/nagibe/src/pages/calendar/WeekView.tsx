@@ -17,9 +17,28 @@ interface Props {
   shoots: CalendarShoot[];
   onShootClick: (shoot: CalendarShoot) => void;
   onDayClick: (date: Date) => void;
+  draggingId: number | null;
+  dragOverDay: string | null;
+  onDragStart: (e: React.DragEvent, shoot: CalendarShoot) => void;
+  onDragEnd: () => void;
+  onDragOver: (e: React.DragEvent, dateKey: string) => void;
+  onDragLeave: (e: React.DragEvent) => void;
+  onDrop: (e: React.DragEvent, dateKey: string) => void;
 }
 
-export default function WeekView({ currentDate, shoots, onShootClick, onDayClick }: Props) {
+export default function WeekView({
+  currentDate,
+  shoots,
+  onShootClick,
+  onDayClick,
+  draggingId,
+  dragOverDay,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+}: Props) {
   const { days, shootsByDay } = useMemo(() => {
     const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
     const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
@@ -42,13 +61,19 @@ export default function WeekView({ currentDate, shoots, onShootClick, onDayClick
           const dateKey = format(day, "yyyy-MM-dd");
           const dayShoots = shootsByDay.get(dateKey) ?? [];
           const today = isToday(day);
+          const isDropTarget = dragOverDay === dateKey;
 
           return (
             <div
               key={dateKey}
+              onDragOver={(e) => onDragOver(e, dateKey)}
+              onDragLeave={onDragLeave}
+              onDrop={(e) => onDrop(e, dateKey)}
               className={cn(
                 "rounded-2xl border flex flex-col min-h-[500px] overflow-hidden transition-colors",
-                today
+                isDropTarget
+                  ? "ring-2 ring-primary border-primary/40 bg-primary/5"
+                  : today
                   ? "border-primary/40 bg-primary/5 dark:bg-primary/10"
                   : "border-border bg-card",
               )}
@@ -82,7 +107,15 @@ export default function WeekView({ currentDate, shoots, onShootClick, onDayClick
               {/* Shoots */}
               <div className="flex-1 p-2 space-y-2 overflow-y-auto">
                 {dayShoots.map((s) => (
-                  <ShootCard key={s.id} shoot={s} onClick={() => onShootClick(s)} />
+                  <div
+                    key={s.id}
+                    draggable
+                    onDragStart={(e) => onDragStart(e, s)}
+                    onDragEnd={onDragEnd}
+                    className={cn("transition-opacity cursor-grab active:cursor-grabbing", draggingId === s.id && "opacity-40")}
+                  >
+                    <ShootCard shoot={s} onClick={() => onShootClick(s)} />
+                  </div>
                 ))}
                 {dayShoots.length === 0 && (
                   <div className="h-full flex items-center justify-center py-8">
@@ -104,7 +137,7 @@ export default function WeekView({ currentDate, shoots, onShootClick, onDayClick
         })}
       </div>
 
-      {/* Mobile: vertical list */}
+      {/* Mobile: vertical list (drag not supported) */}
       <div className="md:hidden space-y-3">
         {days.map((day) => {
           const dateKey = format(day, "yyyy-MM-dd");
