@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Search, Plus, Camera, Printer } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EquipmentStatusBadge } from "@/components/ui/status-badge";
 import { EQUIPMENT_CATEGORIES, EQUIPMENT_STATUS_LABELS } from "@/lib/constants";
@@ -22,90 +22,15 @@ export default function EquipmentList() {
     status: status !== "all" ? status : undefined,
   });
 
-  const handlePrint = () => {
-    const list = equipment ?? [];
-    if (list.length === 0) return;
+  const [, navigate] = useLocation();
 
-    const esc = (v: unknown) =>
-      String(v ?? "").replace(/[&<>"]/g, (c) =>
-        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] || c)
-      );
-
-    const catLabel = (v: string) =>
-      EQUIPMENT_CATEGORIES.find((c) => c.value === v)?.label ?? v;
-    const statusLabel = (v: string) => EQUIPMENT_STATUS_LABELS[v] ?? v;
-
-    const now = new Date().toLocaleString("pt-BR");
-    const filters: string[] = [];
-    if (search) filters.push(`Busca: "${esc(search)}"`);
-    if (category !== "all") filters.push(`Categoria: ${esc(catLabel(category))}`);
-    if (status !== "all") filters.push(`Status: ${esc(statusLabel(status))}`);
-
-    const rows = list
-      .map(
-        (item, i) => `
-          <tr>
-            <td class="num">${i + 1}</td>
-            <td class="code">${esc(item.internalCode || "—")}</td>
-            <td>${esc(item.name)}</td>
-            <td>${esc(catLabel(item.category))}</td>
-            <td class="num">${esc(item.availableQuantity)} / ${esc(item.totalQuantity)}</td>
-            <td>${esc(statusLabel(item.status))}</td>
-            <td>${esc(item.storageLocation || "—")}</td>
-          </tr>`
-      )
-      .join("");
-
-    const html = `<!doctype html>
-<html lang="pt-BR">
-<head>
-  <meta charset="utf-8" />
-  <title>Relação de Equipamentos</title>
-  <style>
-    * { box-sizing: border-box; }
-    body { font-family: Arial, Helvetica, sans-serif; color: #111; margin: 32px; }
-    h1 { font-size: 20px; margin: 0 0 4px; }
-    .meta { font-size: 12px; color: #555; margin-bottom: 16px; }
-    .meta div { margin-top: 2px; }
-    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    thead th { background: #f2f2f2; text-align: left; border-bottom: 2px solid #999; padding: 6px 8px; }
-    tbody td { border-bottom: 1px solid #ddd; padding: 6px 8px; vertical-align: top; }
-    tbody tr:nth-child(even) { background: #fafafa; }
-    .num { text-align: center; white-space: nowrap; }
-    .code { font-family: "Courier New", monospace; white-space: nowrap; }
-    .total { margin-top: 16px; font-size: 12px; font-weight: bold; }
-    @media print { body { margin: 12mm; } }
-  </style>
-</head>
-<body>
-  <h1>Relação de Equipamentos</h1>
-  <div class="meta">
-    <div>Gerado em ${esc(now)}</div>
-    ${filters.length ? `<div>Filtros — ${filters.join(" · ")}</div>` : ""}
-  </div>
-  <table>
-    <thead>
-      <tr>
-        <th class="num">#</th>
-        <th>Código</th>
-        <th>Nome</th>
-        <th>Categoria</th>
-        <th class="num">Disp. / Total</th>
-        <th>Status</th>
-        <th>Local</th>
-      </tr>
-    </thead>
-    <tbody>${rows}</tbody>
-  </table>
-  <div class="total">Total de itens: ${list.length}</div>
-  <script>window.onload = function () { window.print(); };</script>
-</body>
-</html>`;
-
-    const win = window.open("", "_blank");
-    if (!win) return;
-    win.document.write(html);
-    win.document.close();
+  const goToPrint = () => {
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (category !== "all") params.set("category", category);
+    if (status !== "all") params.set("status", status);
+    const qs = params.toString();
+    navigate(`/equipment/print${qs ? `?${qs}` : ""}`);
   };
 
   return (
@@ -119,9 +44,9 @@ export default function EquipmentList() {
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              onClick={handlePrint}
+              onClick={goToPrint}
               disabled={isLoading || (equipment?.length ?? 0) === 0}
-              title="Imprimir relação de equipamentos"
+              title="Abrir página de impressão"
             >
               <Printer className="mr-2 h-4 w-4" /> Imprimir
             </Button>

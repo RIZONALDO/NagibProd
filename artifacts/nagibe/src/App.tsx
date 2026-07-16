@@ -15,6 +15,7 @@ import NewTeamMember from "@/pages/team/new";
 import EditTeamMember from "@/pages/team/[id]";
 import EquipmentList from "@/pages/equipment/index";
 import NewEquipment from "@/pages/equipment/new";
+import EquipmentPrint from "@/pages/equipment/print";
 import EditEquipment from "@/pages/equipment/[id]";
 import ShootsList from "@/pages/shoots/index";
 import NewShoot from "@/pages/shoots/new";
@@ -81,6 +82,9 @@ function Router() {
       </Route>
       <Route path="/equipment/new">
         {() => <ProtectedRoute component={NewEquipment} />}
+      </Route>
+      <Route path="/equipment/print">
+        {() => <ProtectedRoute component={EquipmentPrint} />}
       </Route>
       <Route path="/equipment/:id">
         {() => <ProtectedRoute component={EditEquipment} />}
